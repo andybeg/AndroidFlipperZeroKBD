@@ -109,12 +109,12 @@ The app is a **fullscreen landscape Activity**, not a system keyboard.
 
 1. Pair Flipper in Android Bluetooth settings (once).
 2. Open **Flipper KB Bridge**.
-3. **Settings** → select paired Flipper → **Save** (stores MAC).
+3. **Settings** → select paired Flipper, enable layouts → **Save**.
 4. Start **Android KB Bridge** on Flipper (USB to PC).
 5. Tap the **top-left BLE button** until it is **green**.
-6. Type on the on-screen keyboard.
+6. Type on the on-screen keyboard; swipe the **space bar** to switch layouts.
 
-Layout customization: edit `android/app/src/main/assets/keyboard.json` (see `docs/ANDROID.md`), then rebuild the APK.
+Layouts live in `android/app/src/main/assets/layouts/` (see `docs/ANDROID.md`). Bundled: macOS EN/RU/UA, Number, Logitech MX Keys Mini EN/RU/UA.
 
 ## 3. Prepare the Flipper firmware tree
 

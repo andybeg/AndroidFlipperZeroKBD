@@ -1,5 +1,6 @@
 {
-  "name": "default-qwerty",
+  "id": "macos_en",
+  "name": "macOS EN",
   "rows": [
     [
       {"label": "1", "hid": "0x1E"},
@@ -11,7 +12,9 @@
       {"label": "7", "hid": "0x24"},
       {"label": "8", "hid": "0x25"},
       {"label": "9", "hid": "0x26"},
-      {"label": "0", "hid": "0x27"}
+      {"label": "0", "hid": "0x27"},
+      {"label": "-", "hid": "0x2D"},
+      {"label": "=", "hid": "0x2E"}
     ],
     [
       {"label": "q", "hid": "0x14"},
@@ -23,7 +26,9 @@
       {"label": "u", "hid": "0x18"},
       {"label": "i", "hid": "0x0C"},
       {"label": "o", "hid": "0x12"},
-      {"label": "p", "hid": "0x13"}
+      {"label": "p", "hid": "0x13"},
+      {"label": "[", "hid": "0x2F"},
+      {"label": "]", "hid": "0x30"}
     ],
     [
       {"label": "a", "hid": "0x04"},
@@ -34,10 +39,12 @@
       {"label": "h", "hid": "0x0B"},
       {"label": "j", "hid": "0x0D"},
       {"label": "k", "hid": "0x0E"},
-      {"label": "l", "hid": "0x0F"}
+      {"label": "l", "hid": "0x0F"},
+      {"label": ";", "hid": "0x33"},
+      {"label": "'", "hid": "0x34"}
     ],
     [
-      {"label": "⇥", "hid": "0x2B", "span": 1.5},
+      {"label": "⇧", "hid": "0x00", "mods": "0x02", "span": 1.5, "sticky_mod": true},
       {"label": "z", "hid": "0x1D"},
       {"label": "x", "hid": "0x1B"},
       {"label": "c", "hid": "0x06"},
@@ -45,13 +52,18 @@
       {"label": "b", "hid": "0x05"},
       {"label": "n", "hid": "0x11"},
       {"label": "m", "hid": "0x10"},
+      {"label": ",", "hid": "0x36"},
+      {"label": ".", "hid": "0x37"},
+      {"label": "/", "hid": "0x38"},
       {"label": "⌫", "hid": "0x2A", "span": 1.5}
     ],
     [
-      {"label": "⇧", "hid": "0x00", "mods": "0x02", "span": 1.5, "sticky_mod": true},
-      {"label": ",", "hid": "0x36"},
-      {"label": "␣", "hid": "0x2C", "span": 4},
-      {"label": ".", "hid": "0x37"},
+      {"label": "⌃", "hid": "0x00", "mods": "0x01", "sticky_mod": true},
+      {"label": "⌥", "hid": "0x00", "mods": "0x04", "sticky_mod": true},
+      {"label": "⌘", "hid": "0x00", "mods": "0x08", "sticky_mod": true},
+      {"label": "␣", "hid": "0x2C", "span": 4, "role": "space"},
+      {"label": "⌘", "hid": "0x00", "mods": "0x08", "sticky_mod": true},
+      {"label": "⇥", "hid": "0x2B"},
       {"label": "↵", "hid": "0x28", "span": 1.5}
     ]
   ]

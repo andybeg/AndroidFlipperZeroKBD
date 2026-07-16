@@ -7,8 +7,8 @@ Landscape fullscreen keyboard that sends HID key events to Flipper over BLE.
 ```
 KeyboardActivity (fullscreen landscape)
   ├─ BLE button (top-left) → connect / disconnect
-  ├─ Settings → Flipper MAC
-  └─ JsonKeyboardView ← assets/keyboard.json
+  ├─ Settings → Flipper MAC + enabled layouts
+  └─ JsonKeyboardView ← assets/layouts/*.json
          │
          ▼
   BridgeSession → FlipperBleClient → BLE Serial TX
@@ -21,10 +21,11 @@ There is **no** Android IME / system keyboard registration. The app is a normal 
 1. Pair Flipper in system Bluetooth settings (once).
 2. Install the APK (`make apk-install`).
 3. Open **Flipper KB Bridge**.
-4. Tap **⚙ Settings**, select the paired Flipper, **Save**.
+4. Tap **⚙ Settings**, select the paired Flipper, enable layouts, **Save**.
 5. On Flipper, launch **Android KB Bridge** (USB to PC).
 6. Tap the **top-left BLE button** until it turns green (**Connected**).
 7. Type on the on-screen keyboard; text appears on the PC.
+8. Swipe left/right on the **space bar** to switch layouts.
 
 ## BLE button states
 
@@ -42,18 +43,40 @@ If MAC is not set, Connect opens Settings.
 - Locked to **landscape** (does not rotate).
 - Immersive fullscreen (status and navigation bars hidden; swipe edge to peek).
 - Keep-screen-on while the keyboard activity is open.
+- Current layout name is shown under the BLE status.
 
-## Keyboard layout JSON
+## Keyboard layouts
 
-Default file: `android/app/src/main/assets/keyboard.json`.
+Layouts live as separate JSON files under `android/app/src/main/assets/layouts/`.
 
-After editing, rebuild/reinstall the APK. The app loads this asset at startup.
+Catalog: `layouts/catalog.json`.
+
+Bundled layouts:
+
+| Id | Title |
+|----|-------|
+| `macos_en` | macOS EN |
+| `macos_ru` | macOS RU |
+| `macos_ua` | macOS UA |
+| `number` | Number |
+| `mx_mini_en` | Logitech MX Keys Mini EN |
+| `mx_mini_ru` | Logitech MX Keys Mini RU |
+| `mx_mini_ua` | Logitech MX Keys Mini UA |
+
+RU/UA layouts use the same HID codes as EN (physical key positions). Put the Mac/PC input source on Russian or Ukrainian for correct glyphs; labels are for convenience.
+
+### Switching
+
+- **Settings** → check which layouts are enabled (order follows catalog / save order).
+- On the keyboard: **swipe left/right on the space bar** to cycle enabled layouts.
+- A short tap on space still inserts a space.
 
 ### Schema
 
 ```json
 {
-  "name": "default-qwerty",
+  "id": "macos_en",
+  "name": "macOS EN",
   "rows": [
     [
       {
@@ -61,7 +84,8 @@ After editing, rebuild/reinstall the APK. The app loads this asset at startup.
         "hid": "0x14",
         "mods": "0x00",
         "span": 1,
-        "sticky_mod": false
+        "sticky_mod": false,
+        "role": null
       }
     ]
   ]
@@ -70,24 +94,28 @@ After editing, rebuild/reinstall the APK. The app loads this asset at startup.
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `name` | no | Layout name (informational) |
+| `id` | yes (or catalog) | Stable layout id |
+| `name` | no | Shown in the toolbar |
 | `rows` | yes | Array of rows; each row is an array of keys |
 | `label` | yes | Text drawn on the key |
 | `hid` | yes | USB HID usage (hex string, e.g. `"0x04"` for `a`) |
 | `mods` | no | Modifier bitmask (hex). Default `0x00` |
 | `span` | no | Relative width (supports halves, e.g. `1.5`). Default `1` |
 | `sticky_mod` | no | If `true`, tap toggles sticky mods instead of sending a key |
+| `role` | no | `"space"` enables swipe-to-switch on that key |
 
 ### Sticky modifiers
 
-Example Shift key:
+Works for Shift, Ctrl, Option/Alt, Cmd/GUI — any key with `"sticky_mod": true`:
 
 ```json
 {"label": "⇧", "hid": "0x00", "mods": "0x02", "span": 1.5, "sticky_mod": true}
+{"label": "⌘", "hid": "0x00", "mods": "0x08", "sticky_mod": true}
 ```
 
-- First tap latches Left Shift (key highlights).
-- Next normal key is sent with that modifier, then the latch clears.
+- Tap latches the modifier (key highlights green).
+- Several sticky mods can be combined (XOR toggle per modifier bit).
+- Next normal key is sent with those modifiers, then sticky state clears.
 
 ### Modifier bitmask
 
@@ -97,8 +125,8 @@ Same as protocol `mods` byte (see `docs/PROTOCOL.md`):
 |-----|------|-----|
 | 0 | `0x01` | Left Ctrl |
 | 1 | `0x02` | Left Shift |
-| 2 | `0x04` | Left Alt |
-| 3 | `0x08` | Left GUI |
+| 2 | `0x04` | Left Alt / Option |
+| 3 | `0x08` | Left GUI / Cmd |
 
 ### HID examples
 
@@ -107,34 +135,36 @@ Same as protocol `mods` byte (see `docs/PROTOCOL.md`):
 | `a`–`z` | `0x04`–`0x1D` |
 | `1`–`0` | `0x1E`–`0x27` |
 | Enter | `0x28` |
+| Escape | `0x29` |
 | Backspace | `0x2A` |
 | Tab | `0x2B` |
 | Space | `0x2C` |
 
 ## Settings storage
 
-Flipper MAC is stored in SharedPreferences:
+SharedPreferences file `akb_prefs`:
 
-- file: `akb_prefs`
-- key: `flipper_mac`
-
-Value is the Bluetooth address string (e.g. `AA:BB:CC:DD:EE:FF`).
+| Key | Meaning |
+|-----|---------|
+| `flipper_mac` | Bluetooth address |
+| `enabled_layouts` | Comma-separated layout ids |
+| `current_layout` | Last active layout id |
 
 ## Source map
 
 | Path | Role |
 |------|------|
-| `KeyboardActivity.kt` | Main UI, fullscreen, BLE button |
-| `SettingsActivity.kt` | Pick paired Flipper MAC |
-| `keyboard/KeyboardLayoutLoader.kt` | Parse JSON |
-| `keyboard/JsonKeyboardView.kt` | Draw keys from layout |
+| `KeyboardActivity.kt` | Main UI, fullscreen, BLE, layout cycling |
+| `SettingsActivity.kt` | Flipper MAC + enabled layouts |
+| `keyboard/KeyboardLayoutLoader.kt` | Catalog + JSON parse |
+| `keyboard/JsonKeyboardView.kt` | Draw keys, sticky mods, space swipe |
 | `ble/FlipperBleClient.kt` | GATT client + write queue |
 | `ble/BridgeProtocol.kt` | Frame encode (key down/up) |
-| `prefs/AppPreferences.kt` | MAC persistence |
-| `assets/keyboard.json` | Default layout |
+| `prefs/AppPreferences.kt` | MAC + layout prefs |
+| `assets/layouts/` | Layout JSON files + catalog |
 
 ## Build notes
 
 - JDK **17** required for Gradle (`make apk` auto-detects JDK 17).
 - System `gradle` is not required; use `android/gradlew`.
-- Debug APK: `android/app/build/outputs/apk/debug/app-debug.apk`
+- Release APK: `android/app/build/outputs/apk/release/FlipperZeroKbd.apk`

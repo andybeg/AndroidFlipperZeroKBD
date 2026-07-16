@@ -11,11 +11,11 @@ Android app  ──BLE Serial──►  Flipper FAP  ──USB HID──►  PC
 | Path | Description |
 |------|-------------|
 | `docs/BUILD.md` | Build, flash, install, troubleshooting |
-| `docs/ANDROID.md` | Android app UI, Settings, JSON keyboard layout |
+| `docs/ANDROID.md` | Android app UI, Settings, multi-layout JSON keyboards |
 | `docs/FLIPPER.md` | FAP behavior, USB identity, BLE/RPC notes |
 | `docs/PROTOCOL.md` | BLE UUIDs and frame format |
 | `flipper/android_keyboard_bridge/` | Flipper FAP sources |
-| `android/` | Android app (`assets/keyboard.json`) |
+| `android/` | Android app (`assets/layouts/`) |
 
 ## Requirements
 
@@ -39,11 +39,14 @@ make apk-install
 
 Then on the phone:
 
-1. **Settings** → select paired Flipper → Save  
+1. **Settings** → select paired Flipper, enable layouts → Save  
 2. Tap the **top-left BLE button** (green = ready)  
 3. Type; characters appear on the PC  
+4. Swipe on the **space bar** to switch layouts  
 
 Details: `docs/ANDROID.md`, `docs/FLIPPER.md`.
+
+Bundled layouts: macOS EN/RU/UA, Number, Logitech MX Keys Mini EN/RU/UA.
 
 ## Build shortcuts
 

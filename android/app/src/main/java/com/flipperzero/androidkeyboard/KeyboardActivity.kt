@@ -20,7 +20,9 @@ import com.flipperzero.androidkeyboard.ble.FlipperBleClient
 import com.flipperzero.androidkeyboard.databinding.ActivityKeyboardBinding
 import com.flipperzero.androidkeyboard.keyboard.JsonKeyboardView
 import com.flipperzero.androidkeyboard.keyboard.KeyboardKey
+import com.flipperzero.androidkeyboard.keyboard.KeyboardLayout
 import com.flipperzero.androidkeyboard.keyboard.KeyboardLayoutLoader
+import com.flipperzero.androidkeyboard.keyboard.LayoutInfo
 import com.flipperzero.androidkeyboard.prefs.AppPreferences
 
 class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
@@ -28,6 +30,10 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
     private lateinit var binding: ActivityKeyboardBinding
     private lateinit var bleClient: FlipperBleClient
     private lateinit var prefs: AppPreferences
+
+    private var catalog: List<LayoutInfo> = emptyList()
+    private var enabledLayouts: List<LayoutInfo> = emptyList()
+    private var currentIndex: Int = 0
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -47,15 +53,15 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
 
         prefs = AppPreferences(this)
         bleClient = BridgeSession.getClient(this)
+        catalog = KeyboardLayoutLoader.loadCatalog(this)
 
         binding.bleDot.background = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor("#777777".toColorInt())
         }
 
-        val layout = KeyboardLayoutLoader.loadFromAssets(this)
-        binding.keyboardView.bindLayout(layout)
-        binding.keyboardView.listener = JsonKeyListener()
+        binding.keyboardView.keyListener = JsonKeyListener()
+        binding.keyboardView.layoutSwipeListener = LayoutSwipeListener()
 
         binding.btnBle.setOnClickListener { onBleButtonClicked() }
         binding.btnSettings.setOnClickListener {
@@ -71,6 +77,7 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
         enterFullscreen()
         bleClient.setListener(this)
         renderBleState(bleClient.state, bleClient.statusMessage)
+        reloadEnabledLayouts()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -89,12 +96,51 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
         runOnUiThread { renderBleState(state, message) }
     }
 
-    private inner class JsonKeyListener : JsonKeyboardView.Listener {
+    private fun reloadEnabledLayouts() {
+        val enabledIds = prefs.enabledLayoutIds(catalog)
+        enabledLayouts = enabledIds.mapNotNull { id -> catalog.firstOrNull { it.id == id } }
+        if (enabledLayouts.isEmpty()) {
+            enabledLayouts = catalog
+        }
+
+        val wantedId = prefs.currentLayoutId
+        currentIndex = enabledLayouts.indexOfFirst { it.id == wantedId }.takeIf { it >= 0 } ?: 0
+        applyCurrentLayout()
+    }
+
+    private fun applyCurrentLayout() {
+        if (enabledLayouts.isEmpty()) return
+        currentIndex = currentIndex.coerceIn(0, enabledLayouts.lastIndex)
+        val info = enabledLayouts[currentIndex]
+        val layout: KeyboardLayout = KeyboardLayoutLoader.loadLayout(this, info)
+        binding.keyboardView.bindLayout(layout)
+        binding.txtLayoutName.text = layout.name
+        prefs.currentLayoutId = layout.id
+    }
+
+    private fun cycleLayout(direction: Int) {
+        if (enabledLayouts.size <= 1) {
+            toast(getString(R.string.layout_only_one))
+            return
+        }
+        val size = enabledLayouts.size
+        currentIndex = ((currentIndex + direction) % size + size) % size
+        applyCurrentLayout()
+        toast(enabledLayouts[currentIndex].title)
+    }
+
+    private inner class JsonKeyListener : JsonKeyboardView.KeyListener {
         override fun onKey(key: KeyboardKey, effectiveMods: Byte) {
             if (key.hid.toInt() == 0) return
             if (!BridgeSession.sendTap(key.hid, effectiveMods)) {
                 toast(getString(R.string.ble_not_ready))
             }
+        }
+    }
+
+    private inner class LayoutSwipeListener : JsonKeyboardView.LayoutSwipeListener {
+        override fun onLayoutSwipe(direction: Int) {
+            cycleLayout(direction)
         }
     }
 

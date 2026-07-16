@@ -12,6 +12,10 @@
     <string name="settings_mac_none">MAC: not set</string>
     <string name="settings_mac_current">MAC: %1$s</string>
     <string name="settings_mac_required">Set Flipper MAC in Settings first</string>
+    <string name="settings_layouts_title">Keyboard layouts</string>
+    <string name="settings_layouts_hint">Enable layouts to cycle. Swipe left/right on the space bar to switch.</string>
+    <string name="settings_layouts_required">Enable at least one layout</string>
+    <string name="layout_only_one">Only one layout enabled</string>
     <string name="ble_disconnected">Tap to connect</string>
     <string name="ble_connecting">Connecting…</string>
     <string name="ble_connected">Connected…</string>
