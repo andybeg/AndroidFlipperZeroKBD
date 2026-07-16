@@ -42,7 +42,7 @@ Then on the phone:
 1. **Settings** → select paired Flipper, enable layouts → Save  
 2. Tap the **top-left BLE button** (green = ready)  
 3. Type; characters appear on the PC  
-4. Swipe on the **space bar** to switch layouts  
+4. Swipe on the **space bar** to switch layouts (banner + toolbar show the active name)  
 
 Details: `docs/ANDROID.md`, `docs/FLIPPER.md`.
 

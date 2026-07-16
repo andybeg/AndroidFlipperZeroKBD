@@ -112,7 +112,7 @@ The app is a **fullscreen landscape Activity**, not a system keyboard.
 3. **Settings** → select paired Flipper, enable layouts → **Save**.
 4. Start **Android KB Bridge** on Flipper (USB to PC).
 5. Tap the **top-left BLE button** until it is **green**.
-6. Type on the on-screen keyboard; swipe the **space bar** to switch layouts.
+6. Type on the on-screen keyboard; swipe the **space bar** to switch layouts (active name is shown in a banner and in the toolbar).
 
 Layouts live in `android/app/src/main/assets/layouts/` (see `docs/ANDROID.md`). Bundled: macOS EN/RU/UA, Number, Logitech MX Keys Mini EN/RU/UA.
 

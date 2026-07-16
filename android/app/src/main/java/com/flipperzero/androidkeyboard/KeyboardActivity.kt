@@ -34,6 +34,7 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
     private var catalog: List<LayoutInfo> = emptyList()
     private var enabledLayouts: List<LayoutInfo> = emptyList()
     private var currentIndex: Int = 0
+    private val hideBannerRunnable = Runnable { hideLayoutBanner() }
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -88,6 +89,7 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
     }
 
     override fun onPause() {
+        binding.root.removeCallbacks(hideBannerRunnable)
         bleClient.setListener(null)
         super.onPause()
     }
@@ -108,14 +110,17 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
         applyCurrentLayout()
     }
 
-    private fun applyCurrentLayout() {
+    private fun applyCurrentLayout(announce: Boolean = false) {
         if (enabledLayouts.isEmpty()) return
         currentIndex = currentIndex.coerceIn(0, enabledLayouts.lastIndex)
         val info = enabledLayouts[currentIndex]
         val layout: KeyboardLayout = KeyboardLayoutLoader.loadLayout(this, info)
         binding.keyboardView.bindLayout(layout)
-        binding.txtLayoutName.text = layout.name
+        binding.txtLayoutName.text = getString(R.string.layout_active, layout.name)
         prefs.currentLayoutId = layout.id
+        if (announce) {
+            showLayoutBanner(layout.name)
+        }
     }
 
     private fun cycleLayout(direction: Int) {
@@ -125,8 +130,27 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
         }
         val size = enabledLayouts.size
         currentIndex = ((currentIndex + direction) % size + size) % size
-        applyCurrentLayout()
-        toast(enabledLayouts[currentIndex].title)
+        applyCurrentLayout(announce = true)
+    }
+
+    private fun showLayoutBanner(name: String) {
+        binding.txtLayoutBanner.animate().cancel()
+        binding.root.removeCallbacks(hideBannerRunnable)
+        binding.txtLayoutBanner.text = name
+        binding.txtLayoutBanner.alpha = 1f
+        binding.txtLayoutBanner.visibility = View.VISIBLE
+        binding.root.postDelayed(hideBannerRunnable, LAYOUT_BANNER_MS)
+    }
+
+    private fun hideLayoutBanner() {
+        binding.txtLayoutBanner.animate()
+            .alpha(0f)
+            .setDuration(200L)
+            .withEndAction {
+                binding.txtLayoutBanner.visibility = View.GONE
+                binding.txtLayoutBanner.alpha = 1f
+            }
+            .start()
     }
 
     private inner class JsonKeyListener : JsonKeyboardView.KeyListener {
@@ -224,5 +248,9 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
 
     private fun toast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    companion object {
+        private const val LAYOUT_BANNER_MS = 1200L
     }
 }

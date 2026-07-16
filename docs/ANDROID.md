@@ -43,7 +43,8 @@ If MAC is not set, Connect opens Settings.
 - Locked to **landscape** (does not rotate).
 - Immersive fullscreen (status and navigation bars hidden; swipe edge to peek).
 - Keep-screen-on while the keyboard activity is open.
-- Current layout name is shown under the BLE status.
+- Current layout is always shown in the toolbar as `Layout: …`.
+- After a space-bar swipe, a centered banner shows the new layout name for ~1.2 s.
 
 ## Keyboard layouts
 
@@ -69,6 +70,7 @@ RU/UA layouts use the same HID codes as EN (physical key positions). Put the Mac
 
 - **Settings** → check which layouts are enabled (order follows catalog / save order).
 - On the keyboard: **swipe left/right on the space bar** to cycle enabled layouts.
+  The active layout name appears as a centered banner and stays in the toolbar (`Layout: …`).
 - A short tap on space still inserts a space.
 
 ### Schema
