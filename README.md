@@ -48,6 +48,8 @@ Details: `docs/ANDROID.md`, `docs/FLIPPER.md`.
 
 Bundled layouts: macOS EN/RU/UA, Number, Logitech MX Keys Mini EN/RU/UA.
 
+Layout screens are for convenience only — they do not switch the Mac/PC input language; match the host keyboard source yourself (see `docs/ANDROID.md`).
+
 ## Build shortcuts
 
 ```bash

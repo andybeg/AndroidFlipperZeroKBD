@@ -52,7 +52,19 @@ Layouts live as separate JSON files under `android/app/src/main/assets/layouts/`
 
 Catalog: `layouts/catalog.json`.
 
-Bundled layouts:
+### Important: labels only — no OS integration
+
+On-screen layouts (EN / RU / UA, macOS vs MX Mini, etc.) are **for typing convenience on the phone**. They only change key **labels** and which HID usages are sent for each button.
+
+They do **not** talk to the target Mac/PC:
+
+- Switching layout in this app does **not** change the host input language / keyboard source.
+- The PC still interprets physical HID key codes with **its own** active layout.
+- Example: the “macOS UA” screen shows `і` / `ї` / `є`, but the host prints those characters only if Ukrainian (or matching) input is selected on the Mac/PC. With a US layout active, the same keys produce Latin letters.
+
+RU/UA JSON files therefore reuse the same HID codes as EN (physical key positions). Pick the matching host input source yourself when you need those glyphs.
+
+### Bundled layouts
 
 | Id | Title |
 |----|-------|
@@ -63,8 +75,6 @@ Bundled layouts:
 | `mx_mini_en` | Logitech MX Keys Mini EN |
 | `mx_mini_ru` | Logitech MX Keys Mini RU |
 | `mx_mini_ua` | Logitech MX Keys Mini UA |
-
-RU/UA layouts use the same HID codes as EN (physical key positions). Put the Mac/PC input source on Russian or Ukrainian for correct glyphs; labels are for convenience.
 
 ### Switching
 

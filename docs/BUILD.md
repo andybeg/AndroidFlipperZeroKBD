@@ -116,6 +116,8 @@ The app is a **fullscreen landscape Activity**, not a system keyboard.
 
 Layouts live in `android/app/src/main/assets/layouts/` (see `docs/ANDROID.md`). Bundled: macOS EN/RU/UA, Number, Logitech MX Keys Mini EN/RU/UA.
 
+App layouts only change on-screen labels / which HID keys are tapped — they do **not** switch the target Mac/PC input language.
+
 ## 3. Prepare the Flipper firmware tree
 
 ```bash
