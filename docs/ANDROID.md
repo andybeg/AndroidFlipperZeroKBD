@@ -1,20 +1,22 @@
 # Android App
 
-Landscape fullscreen keyboard that sends HID key events to Flipper over BLE.
+Landscape fullscreen app that sends HID keyboard and mouse events to Flipper over BLE.
 
 ## Architecture
 
 ```
 KeyboardActivity (fullscreen landscape)
   ├─ BLE button (top-left) → connect / disconnect
+  ├─ Mode switch (top-center) → Keyboard | Touchpad
   ├─ Settings → Flipper MAC + enabled layouts
-  └─ JsonKeyboardView ← assets/layouts/*.json
+  ├─ JsonKeyboardView ← assets/layouts/*.json
+  └─ TouchpadView → relative mouse move / click / scroll
          │
          ▼
   BridgeSession → FlipperBleClient → BLE Serial TX
 ```
 
-There is **no** Android IME / system keyboard registration. The app is a normal Activity: keys go to the PC via Flipper, not into other phone apps.
+There is **no** Android IME / system keyboard registration. The app is a normal Activity: input goes to the PC via Flipper, not into other phone apps.
 
 ## First-time setup
 
@@ -24,8 +26,24 @@ There is **no** Android IME / system keyboard registration. The app is a normal 
 4. Tap **⚙ Settings**, select the paired Flipper, enable layouts, **Save**.
 5. On Flipper, launch **Android KB Bridge** (USB to PC).
 6. Tap the **top-left BLE button** until it turns green (**Connected**).
-7. Type on the on-screen keyboard; text appears on the PC.
-8. Swipe left/right on the **space bar** to switch layouts.
+7. Type on the keyboard, or switch to **Touchpad** (top center) for mouse control.
+8. Swipe left/right on the **space bar** to switch keyboard layouts.
+
+## Modes (top center)
+
+| Mode | Behavior |
+|------|----------|
+| **Keyboard** | On-screen layouts; swipe space to cycle |
+| **Touchpad** | Relative mouse pad |
+
+Touchpad gestures:
+
+| Gesture | Action |
+|---------|--------|
+| 1-finger drag | Move cursor |
+| 1-finger tap | Left click |
+| 2-finger vertical drag | Scroll |
+| 2-finger tap | Right click |
 
 ## BLE button states
 
@@ -43,8 +61,9 @@ If MAC is not set, Connect opens Settings.
 - Locked to **landscape** (does not rotate).
 - Immersive fullscreen (status and navigation bars hidden; swipe edge to peek).
 - Keep-screen-on while the keyboard activity is open.
-- Current layout is always shown in the toolbar as `Layout: …`.
+- Current layout is always shown in the toolbar as `Layout: …` (keyboard mode only).
 - After a space-bar swipe, a centered banner shows the new layout name for ~1.2 s.
+- **Keyboard | Touchpad** toggle is centered at the top of the screen.
 
 ## Keyboard layouts
 
@@ -166,12 +185,13 @@ SharedPreferences file `akb_prefs`:
 
 | Path | Role |
 |------|------|
-| `KeyboardActivity.kt` | Main UI, fullscreen, BLE, layout cycling |
+| `KeyboardActivity.kt` | Main UI, fullscreen, BLE, layout cycling, mode switch |
 | `SettingsActivity.kt` | Flipper MAC + enabled layouts |
 | `keyboard/KeyboardLayoutLoader.kt` | Catalog + JSON parse |
 | `keyboard/JsonKeyboardView.kt` | Draw keys, sticky mods, space swipe |
+| `touchpad/TouchpadView.kt` | Relative mouse pad |
 | `ble/FlipperBleClient.kt` | GATT client + write queue |
-| `ble/BridgeProtocol.kt` | Frame encode (key down/up) |
+| `ble/BridgeProtocol.kt` | Frame encode (key + mouse) |
 | `prefs/AppPreferences.kt` | MAC + layout prefs |
 | `assets/layouts/` | Layout JSON files + catalog |
 

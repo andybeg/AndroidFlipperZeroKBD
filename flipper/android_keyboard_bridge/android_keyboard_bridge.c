@@ -6,7 +6,7 @@
 #include "usb_hid_bridge.h"
 
 #define AKB_SERIAL_BUFFER_SIZE 128
-#define AKB_HID_QUEUE_SIZE     32
+#define AKB_HID_QUEUE_SIZE     64
 /** Hold gap so the host sees press before release when both arrive back-to-back. */
 #define AKB_HID_EVENT_GAP_MS   25
 
@@ -87,6 +87,18 @@ static void akb_apply_hid_cmd(AndroidKeyboardBridge* app, const AkbHidCmd* cmd) 
     case AkbHidCmdKeyUp:
         usb_hid_key_up(cmd->mods, cmd->keycode);
         break;
+    case AkbHidCmdMouseMove:
+        usb_hid_mouse_move(cmd->dx, cmd->dy);
+        break;
+    case AkbHidCmdMouseButtonDown:
+        usb_hid_mouse_button_down(cmd->mouse_button);
+        break;
+    case AkbHidCmdMouseButtonUp:
+        usb_hid_mouse_button_up(cmd->mouse_button);
+        break;
+    case AkbHidCmdMouseScroll:
+        usb_hid_mouse_scroll(cmd->scroll);
+        break;
     case AkbHidCmdPanic:
         usb_hid_panic_release();
         break;
@@ -106,6 +118,17 @@ static void akb_apply_hid_cmd(AndroidKeyboardBridge* app, const AkbHidCmd* cmd) 
             sizeof(app->status_line),
             "HID up key=%02X",
             cmd->keycode);
+    } else if(cmd->type == AkbHidCmdMouseMove) {
+        snprintf(app->status_line, sizeof(app->status_line), "Mouse %+d,%+d", cmd->dx, cmd->dy);
+    } else if(
+        cmd->type == AkbHidCmdMouseButtonDown || cmd->type == AkbHidCmdMouseButtonUp) {
+        snprintf(
+            app->status_line,
+            sizeof(app->status_line),
+            "Mouse btn %02X",
+            cmd->mouse_button);
+    } else if(cmd->type == AkbHidCmdMouseScroll) {
+        snprintf(app->status_line, sizeof(app->status_line), "Scroll %+d", cmd->scroll);
     }
     furi_mutex_release(app->mutex);
 }
@@ -282,12 +305,16 @@ int32_t android_keyboard_bridge_app(void* p) {
         }
 
         if(furi_message_queue_get(app->hid_queue, &hid_cmd, 0) == FuriStatusOk) {
+            const bool needs_gap = (hid_cmd.type == AkbHidCmdKeyDown ||
+                                    hid_cmd.type == AkbHidCmdKeyUp);
             akb_apply_hid_cmd(app, &hid_cmd);
-            for(uint8_t i = 0; i < AKB_HID_EVENT_GAP_MS && !app->exit_requested; i++) {
-                furi_delay_ms(1);
+            if(needs_gap) {
+                for(uint8_t i = 0; i < AKB_HID_EVENT_GAP_MS && !app->exit_requested; i++) {
+                    furi_delay_ms(1);
+                }
             }
         } else {
-            furi_delay_ms(10);
+            furi_delay_ms(5);
         }
 
         view_port_update(app->view_port);

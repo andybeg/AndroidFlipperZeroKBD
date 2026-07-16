@@ -7,15 +7,24 @@
 #define AKB_MAGIC_0 0xFB
 #define AKB_MAGIC_1 0x4B
 
-/** Key down/up event frame: FB 4B 03 [event][mods][keycode] */
+/** All current frames use a 3-byte payload after magic+len. */
 #define AKB_FRAME_PAYLOAD_LEN 3
 #define AKB_FRAME_TOTAL_LEN   6
-#define AKB_EVENT_DOWN        0x01
-#define AKB_EVENT_UP          0x02
+
+#define AKB_EVENT_KEY_DOWN    0x01
+#define AKB_EVENT_KEY_UP      0x02
+#define AKB_EVENT_MOUSE_MOVE  0x10
+#define AKB_EVENT_MOUSE_DOWN  0x11
+#define AKB_EVENT_MOUSE_UP    0x12
+#define AKB_EVENT_MOUSE_SCROLL 0x13
 
 typedef enum {
     AkbHidCmdKeyDown,
     AkbHidCmdKeyUp,
+    AkbHidCmdMouseMove,
+    AkbHidCmdMouseButtonDown,
+    AkbHidCmdMouseButtonUp,
+    AkbHidCmdMouseScroll,
     AkbHidCmdPanic,
 } AkbHidCmdType;
 
@@ -23,6 +32,10 @@ typedef struct {
     AkbHidCmdType type;
     uint8_t mods;
     uint8_t keycode;
+    int8_t dx;
+    int8_t dy;
+    uint8_t mouse_button;
+    int8_t scroll;
 } AkbHidCmd;
 
 typedef struct {

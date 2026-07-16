@@ -101,6 +101,31 @@ class FlipperBleClient(private val context: Context) {
         return true
     }
 
+    fun sendMouseMove(dx: Int, dy: Int): Boolean {
+        if (state != State.READY) return false
+        if (dx == 0 && dy == 0) return true
+        enqueueWrite(
+            BridgeProtocol.encodeMouseMove(
+                clampToByte(dx),
+                clampToByte(dy),
+            ),
+        )
+        return true
+    }
+
+    fun sendMouseButton(down: Boolean, button: Byte): Boolean {
+        if (state != State.READY) return false
+        enqueueWrite(BridgeProtocol.encodeMouseButton(down, button))
+        return true
+    }
+
+    fun sendMouseScroll(delta: Int): Boolean {
+        if (state != State.READY) return false
+        if (delta == 0) return true
+        enqueueWrite(BridgeProtocol.encodeMouseScroll(clampToByte(delta)))
+        return true
+    }
+
     private fun enqueueWrite(payload: ByteArray) {
         synchronized(writeQueue) {
             writeQueue.addLast(payload)
@@ -247,6 +272,10 @@ class FlipperBleClient(private val context: Context) {
             UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
         private const val TAP_RELEASE_MS = 60L
+
+        private fun clampToByte(value: Int): Byte {
+            return value.coerceIn(-127, 127).toByte()
+        }
 
         fun bondedFlipperDevices(context: Context): List<BluetoothDevice> {
             val manager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager

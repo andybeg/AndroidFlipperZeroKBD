@@ -73,6 +73,8 @@ main loop    → usb_hid_key_down / key_up → USB
 
 Key down/up events map to `furi_hal_hid_kb_press` / `release` with `(mods << 8) | keycode`.
 
+Mouse events map to `furi_hal_hid_mouse_move` / `press` / `release` / `scroll`. Keyboard commands keep a short inter-event gap; mouse moves do not.
+
 ## Hardware buttons (input pubsub)
 
 Both actions use a subscription to `RECORD_INPUT_EVENTS` (hardware buttons after debounce), not the ViewPort input path — so they still work while the main loop is busy applying HID.
@@ -89,8 +91,8 @@ Forced on uses `sequence_display_backlight_enforce_on`; off restores `sequence_d
 | File | Role |
 |------|------|
 | `android_keyboard_bridge.c` | App UI, BLE lifecycle, HID queue pump, Back / Up |
-| `protocol.c` / `protocol.h` | Frame sync + key down/up parse |
-| `usb_hid_bridge.c` / `.h` | USB HID mode + key down/up |
+| `protocol.c` / `protocol.h` | Frame sync + key/mouse parse |
+| `usb_hid_bridge.c` / `.h` | USB HID keyboard + mouse |
 | `application.fam` | FAP metadata (`stack_size` 4 KiB) |
 
 ## Build / deploy

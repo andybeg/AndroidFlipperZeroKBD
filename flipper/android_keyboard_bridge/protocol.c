@@ -23,15 +23,41 @@ static bool akb_dispatch_frame(AkbProtocolParser* parser, const uint8_t* frame) 
     }
 
     const uint8_t event = frame[3];
-    if(event != AKB_EVENT_DOWN && event != AKB_EVENT_UP) {
+    AkbHidCmd cmd;
+    memset(&cmd, 0, sizeof(cmd));
+
+    switch(event) {
+    case AKB_EVENT_KEY_DOWN:
+        cmd.type = AkbHidCmdKeyDown;
+        cmd.mods = frame[4];
+        cmd.keycode = frame[5];
+        break;
+    case AKB_EVENT_KEY_UP:
+        cmd.type = AkbHidCmdKeyUp;
+        cmd.mods = frame[4];
+        cmd.keycode = frame[5];
+        break;
+    case AKB_EVENT_MOUSE_MOVE:
+        cmd.type = AkbHidCmdMouseMove;
+        cmd.dx = (int8_t)frame[4];
+        cmd.dy = (int8_t)frame[5];
+        break;
+    case AKB_EVENT_MOUSE_DOWN:
+        cmd.type = AkbHidCmdMouseButtonDown;
+        cmd.mouse_button = frame[4];
+        break;
+    case AKB_EVENT_MOUSE_UP:
+        cmd.type = AkbHidCmdMouseButtonUp;
+        cmd.mouse_button = frame[4];
+        break;
+    case AKB_EVENT_MOUSE_SCROLL:
+        cmd.type = AkbHidCmdMouseScroll;
+        cmd.scroll = (int8_t)frame[4];
+        break;
+    default:
         return false;
     }
 
-    AkbHidCmd cmd = {
-        .type = (event == AKB_EVENT_DOWN) ? AkbHidCmdKeyDown : AkbHidCmdKeyUp,
-        .mods = frame[4],
-        .keycode = frame[5],
-    };
     return akb_enqueue(parser, &cmd);
 }
 

@@ -1,6 +1,6 @@
 # Android Keyboard → Flipper Zero → USB HID
 
-Bluetooth bridge: a landscape Android keyboard app sends HID key events to Flipper Zero over BLE; Flipper injects them into a PC as a USB keyboard.
+Bluetooth bridge: a landscape Android app sends keyboard and mouse HID events to Flipper Zero over BLE; Flipper injects them into a PC as a USB keyboard/mouse.
 
 ```
 Android app  ──BLE Serial──►  Flipper FAP  ──USB HID──►  PC
@@ -41,7 +41,7 @@ Then on the phone:
 
 1. **Settings** → select paired Flipper, enable layouts → Save  
 2. Tap the **top-left BLE button** (green = ready)  
-3. Type; characters appear on the PC  
+3. Type on the keyboard, or use the top-center **Keyboard | Touchpad** switch  
 4. Swipe on the **space bar** to switch layouts (banner + toolbar show the active name)  
 
 Details: `docs/ANDROID.md`, `docs/FLIPPER.md`.
@@ -69,10 +69,4 @@ Full instructions: `docs/BUILD.md`.
 
 ## Protocol
 
-Each tap is `key_down` then `key_up` (6-byte frames):
-
-```text
-FB 4B 03 [01|02] [mods] [keycode]
-```
-
-See `docs/PROTOCOL.md`.
+Keyboard taps use `key_down` / `key_up`; touchpad uses mouse move / button / scroll frames (same 6-byte header). See `docs/PROTOCOL.md`.

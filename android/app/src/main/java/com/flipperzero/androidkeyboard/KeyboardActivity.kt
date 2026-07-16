@@ -24,8 +24,11 @@ import com.flipperzero.androidkeyboard.keyboard.KeyboardLayout
 import com.flipperzero.androidkeyboard.keyboard.KeyboardLayoutLoader
 import com.flipperzero.androidkeyboard.keyboard.LayoutInfo
 import com.flipperzero.androidkeyboard.prefs.AppPreferences
+import com.flipperzero.androidkeyboard.touchpad.TouchpadView
 
 class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
+
+    private enum class InputMode { KEYBOARD, TOUCHPAD }
 
     private lateinit var binding: ActivityKeyboardBinding
     private lateinit var bleClient: FlipperBleClient
@@ -34,6 +37,7 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
     private var catalog: List<LayoutInfo> = emptyList()
     private var enabledLayouts: List<LayoutInfo> = emptyList()
     private var currentIndex: Int = 0
+    private var inputMode: InputMode = InputMode.KEYBOARD
     private val hideBannerRunnable = Runnable { hideLayoutBanner() }
 
     private val permissionLauncher = registerForActivityResult(
@@ -63,12 +67,16 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
 
         binding.keyboardView.keyListener = JsonKeyListener()
         binding.keyboardView.layoutSwipeListener = LayoutSwipeListener()
+        binding.touchpadView.listener = TouchpadListener()
 
         binding.btnBle.setOnClickListener { onBleButtonClicked() }
         binding.btnSettings.setOnClickListener {
             startActivity(Intent(this, SettingsActivity::class.java))
         }
+        binding.btnModeKeyboard.setOnClickListener { setInputMode(InputMode.KEYBOARD) }
+        binding.btnModeTouchpad.setOnClickListener { setInputMode(InputMode.TOUCHPAD) }
 
+        setInputMode(InputMode.KEYBOARD)
         ensurePermissions()
         renderBleState(bleClient.state, bleClient.statusMessage)
     }
@@ -153,6 +161,16 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
             .start()
     }
 
+    private fun setInputMode(mode: InputMode) {
+        inputMode = mode
+        val keyboard = mode == InputMode.KEYBOARD
+        binding.keyboardView.visibility = if (keyboard) View.VISIBLE else View.GONE
+        binding.touchpadView.visibility = if (keyboard) View.GONE else View.VISIBLE
+        binding.txtLayoutName.visibility = if (keyboard) View.VISIBLE else View.GONE
+        binding.btnModeKeyboard.isSelected = keyboard
+        binding.btnModeTouchpad.isSelected = !keyboard
+    }
+
     private inner class JsonKeyListener : JsonKeyboardView.KeyListener {
         override fun onKey(key: KeyboardKey, effectiveMods: Byte) {
             if (key.hid.toInt() == 0) return
@@ -165,6 +183,12 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
     private inner class LayoutSwipeListener : JsonKeyboardView.LayoutSwipeListener {
         override fun onLayoutSwipe(direction: Int) {
             cycleLayout(direction)
+        }
+    }
+
+    private inner class TouchpadListener : TouchpadView.Listener {
+        override fun onReadyRequired() {
+            toast(getString(R.string.ble_not_ready))
         }
     }
 

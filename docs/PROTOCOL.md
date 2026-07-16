@@ -34,16 +34,22 @@ The FAP hijacks the built-in Serial-over-BLE profile (same as the official mobil
 
 ## Frame format
 
-Event-based packets: each tap is `key_down` then `key_up`.
+All frames share the same header; the `event` byte selects keyboard or mouse.
 
 | Offset | Size | Value | Description |
 |--------|------|-------|-------------|
 | 0 | 1 | `0xFB` | Magic byte 0 |
 | 1 | 1 | `0x4B` | Magic byte 1 ("FBK") |
-| 2 | 1 | `0x03` | Payload length |
-| 3 | 1 | `event` | `0x01` = key down, `0x02` = key up |
-| 4 | 1 | `mods` | Modifier bitmask |
-| 5 | 1 | `keycode` | USB HID usage (keyboard page) |
+| 2 | 1 | `0x03` | Payload length (always 3) |
+| 3 | 1 | `event` | See table below |
+| 4–5 | 2 | — | Event-specific payload |
+
+### Keyboard events
+
+| `event` | Byte 4 | Byte 5 |
+|---------|--------|--------|
+| `0x01` key down | `mods` | `keycode` |
+| `0x02` key up | `mods` | `keycode` |
 
 ```text
 FB 4B 03 [01|02] [mods] [keycode]
@@ -51,9 +57,35 @@ FB 4B 03 [01|02] [mods] [keycode]
 
 Android sends `down`, then after a short hold (~60 ms) `up` for the same `(mods, keycode)`.
 
-The Flipper FAP applies HID on its app thread with a small gap between commands so the host sees the press.
+The Flipper FAP applies keyboard HID with a small gap between commands so the host sees the press.
 
-On BLE disconnect / FAP exit, Flipper calls USB `release_all`.
+### Mouse / touchpad events
+
+| `event` | Byte 4 | Byte 5 |
+|---------|--------|--------|
+| `0x10` move | `dx` (int8) | `dy` (int8) |
+| `0x11` button down | button mask | `0` |
+| `0x12` button up | button mask | `0` |
+| `0x13` scroll | delta (int8) | `0` |
+
+```text
+FB 4B 03 10 [dx] [dy]
+FB 4B 03 11 [btn] 00
+FB 4B 03 12 [btn] 00
+FB 4B 03 13 [delta] 00
+```
+
+Button mask (USB HID mouse):
+
+| Bit | Mask | Button |
+|-----|------|--------|
+| 0 | `0x01` | Left |
+| 1 | `0x02` | Right |
+| 2 | `0x04` | Middle / wheel |
+
+Mouse moves are applied without the keyboard inter-event gap so the cursor stays responsive.
+
+On BLE disconnect / FAP exit, Flipper releases all keys and mouse buttons.
 
 ### Modifier bitmask (`mods`)
 
