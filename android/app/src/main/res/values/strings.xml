@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Flipper KB Bridge</string>
+    <string name="settings">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_mac_hint">Choose a paired Flipper. Pair it first in system Bluetooth settings if it is missing.</string>
+    <string name="settings_paired_list">Paired Flipper devices</string>
+    <string name="settings_refresh">Refresh</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_saved">Saved</string>
+    <string name="settings_select_device">Select a device</string>
+    <string name="settings_no_devices">No paired Flipper found</string>
+    <string name="settings_mac_none">MAC: not set</string>
+    <string name="settings_mac_current">MAC: %1$s</string>
+    <string name="settings_mac_required">Set Flipper MAC in Settings first</string>
+    <string name="ble_disconnected">Tap to connect</string>
+    <string name="ble_connecting">Connecting…</string>
+    <string name="ble_connected">Connected…</string>
+    <string name="ble_ready">Connected</string>
+    <string name="ble_not_ready">Not connected — tap the button at top left</string>
+    <string name="ble_permission_required">Bluetooth permission required</string>
+</resources>

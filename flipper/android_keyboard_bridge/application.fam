@@ -1,0 +1,13 @@
+App(
+    appid="android_keyboard_bridge",
+    name="Android KB Bridge",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="android_keyboard_bridge_app",
+    stack_size=4 * 1024,
+    requires=[
+        "bt",
+        "gui",
+        "notification",
+    ],
+    order=90,
+)

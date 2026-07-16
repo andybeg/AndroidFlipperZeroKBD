@@ -1,0 +1,182 @@
+package com.flipperzero.androidkeyboard
+
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.ActivityInfo
+import android.graphics.drawable.GradientDrawable
+import android.os.Build
+import android.os.Bundle
+import android.view.View
+import android.view.WindowManager
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.toColorInt
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import com.flipperzero.androidkeyboard.ble.BlePermissions
+import com.flipperzero.androidkeyboard.ble.FlipperBleClient
+import com.flipperzero.androidkeyboard.databinding.ActivityKeyboardBinding
+import com.flipperzero.androidkeyboard.keyboard.JsonKeyboardView
+import com.flipperzero.androidkeyboard.keyboard.KeyboardKey
+import com.flipperzero.androidkeyboard.keyboard.KeyboardLayoutLoader
+import com.flipperzero.androidkeyboard.prefs.AppPreferences
+
+class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
+
+    private lateinit var binding: ActivityKeyboardBinding
+    private lateinit var bleClient: FlipperBleClient
+    private lateinit var prefs: AppPreferences
+
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { results ->
+        if (!results.values.all { it }) {
+            toast(getString(R.string.ble_permission_required))
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        enterFullscreen()
+
+        binding = ActivityKeyboardBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        prefs = AppPreferences(this)
+        bleClient = BridgeSession.getClient(this)
+
+        binding.bleDot.background = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor("#777777".toColorInt())
+        }
+
+        val layout = KeyboardLayoutLoader.loadFromAssets(this)
+        binding.keyboardView.bindLayout(layout)
+        binding.keyboardView.listener = JsonKeyListener()
+
+        binding.btnBle.setOnClickListener { onBleButtonClicked() }
+        binding.btnSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        ensurePermissions()
+        renderBleState(bleClient.state, bleClient.statusMessage)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        enterFullscreen()
+        bleClient.setListener(this)
+        renderBleState(bleClient.state, bleClient.statusMessage)
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            enterFullscreen()
+        }
+    }
+
+    override fun onPause() {
+        bleClient.setListener(null)
+        super.onPause()
+    }
+
+    override fun onStateChanged(state: FlipperBleClient.State, message: String) {
+        runOnUiThread { renderBleState(state, message) }
+    }
+
+    private inner class JsonKeyListener : JsonKeyboardView.Listener {
+        override fun onKey(key: KeyboardKey, effectiveMods: Byte) {
+            if (key.hid.toInt() == 0) return
+            if (!BridgeSession.sendTap(key.hid, effectiveMods)) {
+                toast(getString(R.string.ble_not_ready))
+            }
+        }
+    }
+
+    private fun onBleButtonClicked() {
+        when (bleClient.state) {
+            FlipperBleClient.State.READY,
+            FlipperBleClient.State.CONNECTED,
+            FlipperBleClient.State.CONNECTING,
+            -> bleClient.disconnect()
+
+            FlipperBleClient.State.DISCONNECTED,
+            FlipperBleClient.State.ERROR,
+            -> connectConfigured()
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun connectConfigured() {
+        val mac = prefs.flipperMac
+        if (mac.isNullOrBlank()) {
+            toast(getString(R.string.settings_mac_required))
+            startActivity(Intent(this, SettingsActivity::class.java))
+            return
+        }
+        if (!ensurePermissions()) return
+        bleClient.connectAddress(mac)
+    }
+
+    private fun renderBleState(state: FlipperBleClient.State, message: String) {
+        binding.txtBleStatus.text = when (state) {
+            FlipperBleClient.State.READY -> getString(R.string.ble_ready)
+            FlipperBleClient.State.CONNECTING -> getString(R.string.ble_connecting)
+            FlipperBleClient.State.CONNECTED -> getString(R.string.ble_connected)
+            FlipperBleClient.State.ERROR -> message
+            FlipperBleClient.State.DISCONNECTED -> getString(R.string.ble_disconnected)
+        }
+
+        val color = when (state) {
+            FlipperBleClient.State.READY -> "#4CAF50".toColorInt()
+            FlipperBleClient.State.CONNECTING,
+            FlipperBleClient.State.CONNECTED,
+            -> "#FF9800".toColorInt()
+            FlipperBleClient.State.ERROR -> "#F44336".toColorInt()
+            FlipperBleClient.State.DISCONNECTED -> "#777777".toColorInt()
+        }
+
+        (binding.bleDot.background as? GradientDrawable)?.setColor(color)
+            ?: binding.bleDot.setBackgroundColor(color)
+    }
+
+    private fun ensurePermissions(): Boolean {
+        val needed = BlePermissions.missing(this)
+        if (needed.isNotEmpty()) {
+            permissionLauncher.launch(needed)
+            return false
+        }
+        return true
+    }
+
+    private fun enterFullscreen() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.hide(WindowInsetsCompat.Type.systemBars())
+        controller.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+        @Suppress("DEPRECATION")
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            window.decorView.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                )
+        }
+    }
+
+    private fun toast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+}

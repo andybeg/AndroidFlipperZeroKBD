@@ -1,0 +1,16 @@
+# Android
+android/.gradle/
+android/.idea/
+android/local.properties
+android/**/build/
+android/**/*.iml
+*.apk
+*.aab
+
+# Flipper build artifacts
+flipper/**/*.fap
+flipper/**/*.elf
+
+# OS
+.DS_Store
+Thumbs.db

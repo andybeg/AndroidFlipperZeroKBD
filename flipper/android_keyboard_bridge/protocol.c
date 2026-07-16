@@ -1,0 +1,98 @@
+#include "protocol.h"
+
+#include <string.h>
+
+void akb_protocol_init(AkbProtocolParser* parser, FuriMessageQueue* hid_queue) {
+    parser->length = 0;
+    parser->hid_queue = hid_queue;
+}
+
+static bool akb_payload_len_supported(uint8_t payload_len) {
+    return payload_len == AKB_FRAME_A_PAYLOAD_LEN || payload_len == AKB_FRAME_B_PAYLOAD_LEN;
+}
+
+static bool akb_enqueue(AkbProtocolParser* parser, const AkbHidCmd* cmd) {
+    if(!parser->hid_queue) {
+        return false;
+    }
+    return furi_message_queue_put(parser->hid_queue, cmd, 0) == FuriStatusOk;
+}
+
+static bool akb_dispatch_frame(AkbProtocolParser* parser, const uint8_t* frame) {
+    if(frame[0] != AKB_MAGIC_0 || frame[1] != AKB_MAGIC_1) {
+        return false;
+    }
+
+    const uint8_t payload_len = frame[2];
+    if(payload_len == AKB_FRAME_B_PAYLOAD_LEN) {
+        const uint8_t event = frame[3];
+        AkbHidCmd cmd = {
+            .type = (event == AKB_EVENT_DOWN) ? AkbHidCmdKeyDown : AkbHidCmdKeyUp,
+            .mods = frame[4],
+            .keycode = frame[5],
+        };
+
+        if(event != AKB_EVENT_DOWN && event != AKB_EVENT_UP) {
+            return false;
+        }
+        return akb_enqueue(parser, &cmd);
+    }
+
+    if(payload_len == AKB_FRAME_A_PAYLOAD_LEN) {
+        AkbHidCmd cmd = {.type = AkbHidCmdReport};
+        memcpy(cmd.report, &frame[3], AKB_HID_REPORT_LEN);
+        return akb_enqueue(parser, &cmd);
+    }
+
+    return false;
+}
+
+size_t akb_protocol_feed(AkbProtocolParser* parser, const uint8_t* data, size_t size) {
+    size_t frames = 0;
+
+    for(size_t i = 0; i < size; i++) {
+        if(parser->length >= sizeof(parser->buffer)) {
+            parser->length = 0;
+        }
+        parser->buffer[parser->length++] = data[i];
+
+        while(parser->length >= 3) {
+            size_t sync = 0;
+            while(sync + 1 < parser->length &&
+                  (parser->buffer[sync] != AKB_MAGIC_0 ||
+                   parser->buffer[sync + 1] != AKB_MAGIC_1)) {
+                sync++;
+            }
+
+            if(sync > 0) {
+                memmove(parser->buffer, parser->buffer + sync, parser->length - sync);
+                parser->length -= sync;
+            }
+
+            if(parser->length < 3) {
+                break;
+            }
+
+            const uint8_t payload_len = parser->buffer[2];
+            if(!akb_payload_len_supported(payload_len)) {
+                memmove(parser->buffer, parser->buffer + 1, parser->length - 1);
+                parser->length -= 1;
+                continue;
+            }
+
+            const size_t total = 3U + payload_len;
+            if(parser->length < total) {
+                break;
+            }
+
+            if(akb_dispatch_frame(parser, parser->buffer)) {
+                frames++;
+            }
+
+            memmove(parser->buffer, parser->buffer + total, parser->length - total);
+            parser->length -= total;
+        }
+    }
+
+    return frames;
+}

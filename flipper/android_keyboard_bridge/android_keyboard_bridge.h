@@ -1,0 +1,39 @@
+#pragma once
+
+#include <furi.h>
+#include <gui/gui.h>
+#include <bt/bt_service/bt.h>
+#include <furi_ble/profile_interface.h>
+#include <input/input.h>
+#include <notification/notification_messages.h>
+
+#include "protocol.h"
+
+#define AKB_TAG "AndroidKBBridge"
+
+typedef struct {
+    Bt* bt;
+    FuriHalBleProfileBase* profile;
+    Gui* gui;
+    ViewPort* view_port;
+    NotificationApp* notifications;
+
+    FuriPubSub* input_events;
+    FuriPubSubSubscription* input_subscription;
+
+    FuriMutex* mutex;
+    FuriMessageQueue* hid_queue;
+
+    AkbProtocolParser parser;
+
+    bool ble_active;
+    bool ble_phone_connected;
+    bool ble_need_buffer_notify;
+    volatile bool exit_requested;
+    volatile bool backlight_forced;
+    uint8_t reclaim_ticks;
+    bool usb_connected;
+    uint32_t frames_received;
+    uint32_t hid_applied;
+    char status_line[48];
+} AndroidKeyboardBridge;
