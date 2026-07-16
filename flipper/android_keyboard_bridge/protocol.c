@@ -7,10 +7,6 @@ void akb_protocol_init(AkbProtocolParser* parser, FuriMessageQueue* hid_queue) {
     parser->hid_queue = hid_queue;
 }
 
-static bool akb_payload_len_supported(uint8_t payload_len) {
-    return payload_len == AKB_FRAME_A_PAYLOAD_LEN || payload_len == AKB_FRAME_B_PAYLOAD_LEN;
-}
-
 static bool akb_enqueue(AkbProtocolParser* parser, const AkbHidCmd* cmd) {
     if(!parser->hid_queue) {
         return false;
@@ -22,29 +18,21 @@ static bool akb_dispatch_frame(AkbProtocolParser* parser, const uint8_t* frame) 
     if(frame[0] != AKB_MAGIC_0 || frame[1] != AKB_MAGIC_1) {
         return false;
     }
-
-    const uint8_t payload_len = frame[2];
-    if(payload_len == AKB_FRAME_B_PAYLOAD_LEN) {
-        const uint8_t event = frame[3];
-        AkbHidCmd cmd = {
-            .type = (event == AKB_EVENT_DOWN) ? AkbHidCmdKeyDown : AkbHidCmdKeyUp,
-            .mods = frame[4],
-            .keycode = frame[5],
-        };
-
-        if(event != AKB_EVENT_DOWN && event != AKB_EVENT_UP) {
-            return false;
-        }
-        return akb_enqueue(parser, &cmd);
+    if(frame[2] != AKB_FRAME_PAYLOAD_LEN) {
+        return false;
     }
 
-    if(payload_len == AKB_FRAME_A_PAYLOAD_LEN) {
-        AkbHidCmd cmd = {.type = AkbHidCmdReport};
-        memcpy(cmd.report, &frame[3], AKB_HID_REPORT_LEN);
-        return akb_enqueue(parser, &cmd);
+    const uint8_t event = frame[3];
+    if(event != AKB_EVENT_DOWN && event != AKB_EVENT_UP) {
+        return false;
     }
 
-    return false;
+    AkbHidCmd cmd = {
+        .type = (event == AKB_EVENT_DOWN) ? AkbHidCmdKeyDown : AkbHidCmdKeyUp,
+        .mods = frame[4],
+        .keycode = frame[5],
+    };
+    return akb_enqueue(parser, &cmd);
 }
 
 size_t akb_protocol_feed(AkbProtocolParser* parser, const uint8_t* data, size_t size) {
@@ -74,7 +62,7 @@ size_t akb_protocol_feed(AkbProtocolParser* parser, const uint8_t* data, size_t 
             }
 
             const uint8_t payload_len = parser->buffer[2];
-            if(!akb_payload_len_supported(payload_len)) {
+            if(payload_len != AKB_FRAME_PAYLOAD_LEN) {
                 memmove(parser->buffer, parser->buffer + 1, parser->length - 1);
                 parser->length -= 1;
                 continue;

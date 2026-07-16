@@ -92,7 +92,7 @@ class FlipperBleClient(private val context: Context) {
         return true
     }
 
-    /** Variant B tap: key_down, then key_up after a short hold. */
+    /** Tap: key_down, then key_up after a short hold. */
     fun sendTap(keyCode: Byte, modifiers: Byte = 0): Boolean {
         if (!sendKeyEvent(down = true, keyCode = keyCode, modifiers = modifiers)) return false
         mainHandler.postDelayed({

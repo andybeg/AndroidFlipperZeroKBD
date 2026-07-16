@@ -7,7 +7,7 @@
 | Android app | Landscape keyboard UI, builds HID events |
 | BLE transport | Flipper Serial GATT service (hijacked by FAP) |
 | Flipper FAP | Parses frames, applies USB HID to PC |
-| USB HID | Standard boot keyboard report to host |
+| USB HID | Key press/release to host |
 
 ## BLE GATT — Flipper Serial Service
 
@@ -28,13 +28,13 @@ The FAP hijacks the built-in Serial-over-BLE profile (same as the official mobil
 2. Save Flipper MAC in the Android app Settings.
 3. Launch **Android KB Bridge** FAP on Flipper (BLE Serial + USB HID).
 4. Tap the app’s BLE button; GATT discovers Serial service and becomes READY.
-5. App writes Variant B frames to the phone→Flipper write characteristic (`WRITE_NO_RESPONSE`), with an internal write queue so down/up are not dropped.
+5. App writes key-event frames to the phone→Flipper write characteristic (`WRITE_NO_RESPONSE`), with an internal write queue so down/up are not dropped.
 
 > Flow-control characteristic subscription is optional at keyboard rates. The FAP notifies buffer-empty from its main loop (not from the RX callback) to avoid a mutex deadlock with the Serial service.
 
-## Frame format — Variant B (current)
+## Frame format
 
-Event-based packets (preferred; avoids stuck keys if a release snapshot is lost):
+Event-based packets: each tap is `key_down` then `key_up`.
 
 | Offset | Size | Value | Description |
 |--------|------|-------|-------------|
@@ -42,8 +42,12 @@ Event-based packets (preferred; avoids stuck keys if a release snapshot is lost)
 | 1 | 1 | `0x4B` | Magic byte 1 ("FBK") |
 | 2 | 1 | `0x03` | Payload length |
 | 3 | 1 | `event` | `0x01` = key down, `0x02` = key up |
-| 4 | 1 | `mods` | Modifier bitmask (same as Variant A) |
+| 4 | 1 | `mods` | Modifier bitmask |
 | 5 | 1 | `keycode` | USB HID usage (keyboard page) |
+
+```text
+FB 4B 03 [01|02] [mods] [keycode]
+```
 
 Android sends `down`, then after a short hold (~60 ms) `up` for the same `(mods, keycode)`.
 
@@ -51,28 +55,7 @@ The Flipper FAP applies HID on its app thread with a small gap between commands 
 
 On BLE disconnect / FAP exit, Flipper calls USB `release_all`.
 
-## Frame format — Variant A (still accepted)
-
-Fixed 11-byte frame per HID snapshot (legacy; Flipper still parses these):
-
-| Offset | Size | Value | Description |
-|--------|------|-------|-------------|
-| 0 | 1 | `0xFB` | Magic byte 0 |
-| 1 | 1 | `0x4B` | Magic byte 1 ("FBK") |
-| 2 | 1 | `0x08` | Payload length (always 8) |
-| 3 | 8 | — | HID keyboard report |
-
-### HID keyboard report (bytes 3–10)
-
-Standard USB boot keyboard report (no report ID):
-
-| Byte | Field | Description |
-|------|-------|-------------|
-| 0 | `mods` | Modifier bitmask |
-| 1 | `reserved` | Always `0x00` |
-| 2–7 | `keys[6]` | Up to 6 simultaneous key codes (0 = empty) |
-
-#### Modifier bitmask (`mods`)
+### Modifier bitmask (`mods`)
 
 | Bit | Mask | Key |
 |-----|------|-----|
@@ -85,7 +68,7 @@ Standard USB boot keyboard report (no report ID):
 | 6 | `0x40` | Right Alt |
 | 7 | `0x80` | Right GUI |
 
-#### Key codes
+### Key codes
 
 USB HID Usage Page 0x07 (keyboard). Examples:
 
@@ -100,12 +83,6 @@ USB HID Usage Page 0x07 (keyboard). Examples:
 | Space | `0x2C` |
 
 Full table: [USB HID Usage Tables](https://usb.org/sites/default/files/hut1_21.pdf).
-
-### Variant A semantics
-
-- Each frame is a **complete keyboard state snapshot**.
-- Empty keyboard: `mods=0`, all keys `0`.
-- On BLE disconnect, Flipper sends `release_all` to USB (panic release).
 
 ## Status codes (future)
 

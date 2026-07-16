@@ -129,7 +129,7 @@ Value is the Bluetooth address string (e.g. `AA:BB:CC:DD:EE:FF`).
 | `keyboard/KeyboardLayoutLoader.kt` | Parse JSON |
 | `keyboard/JsonKeyboardView.kt` | Draw keys from layout |
 | `ble/FlipperBleClient.kt` | GATT client + write queue |
-| `ble/BridgeProtocol.kt` | Variant B frame encode |
+| `ble/BridgeProtocol.kt` | Frame encode (key down/up) |
 | `prefs/AppPreferences.kt` | MAC persistence |
 | `assets/keyboard.json` | Default layout |
 

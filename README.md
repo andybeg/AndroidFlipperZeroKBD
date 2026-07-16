@@ -13,7 +13,7 @@ Android app  ──BLE Serial──►  Flipper FAP  ──USB HID──►  PC
 | `docs/BUILD.md` | Build, flash, install, troubleshooting |
 | `docs/ANDROID.md` | Android app UI, Settings, JSON keyboard layout |
 | `docs/FLIPPER.md` | FAP behavior, USB identity, BLE/RPC notes |
-| `docs/PROTOCOL.md` | BLE UUIDs and frame formats (Variant A/B) |
+| `docs/PROTOCOL.md` | BLE UUIDs and frame format |
 | `flipper/android_keyboard_bridge/` | Flipper FAP sources |
 | `android/` | Android app (`assets/keyboard.json`) |
 
@@ -64,10 +64,10 @@ Full instructions: `docs/BUILD.md`.
 
 ## Protocol
 
-**Variant B** (current): each tap is `key_down` then `key_up` (6-byte frames).
+Each tap is `key_down` then `key_up` (6-byte frames):
 
 ```text
 FB 4B 03 [01|02] [mods] [keycode]
 ```
 
-Variant A (full 8-byte HID snapshot) is still accepted by the FAP. See `docs/PROTOCOL.md`.
+See `docs/PROTOCOL.md`.

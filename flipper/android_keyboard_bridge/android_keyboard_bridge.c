@@ -87,9 +87,6 @@ static void akb_apply_hid_cmd(AndroidKeyboardBridge* app, const AkbHidCmd* cmd) 
     case AkbHidCmdKeyUp:
         usb_hid_key_up(cmd->mods, cmd->keycode);
         break;
-    case AkbHidCmdReport:
-        usb_hid_apply_report(cmd->report);
-        break;
     case AkbHidCmdPanic:
         usb_hid_panic_release();
         break;

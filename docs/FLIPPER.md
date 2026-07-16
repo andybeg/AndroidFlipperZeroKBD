@@ -71,7 +71,7 @@ BLE callback → protocol parse → hid_queue
 main loop    → usb_hid_key_down / key_up → USB
 ```
 
-Variant B events map to `furi_hal_hid_kb_press` / `release` with `(mods << 8) | keycode`.
+Key down/up events map to `furi_hal_hid_kb_press` / `release` with `(mods << 8) | keycode`.
 
 ## Hardware buttons (input pubsub)
 
@@ -89,7 +89,7 @@ Forced on uses `sequence_display_backlight_enforce_on`; off restores `sequence_d
 | File | Role |
 |------|------|
 | `android_keyboard_bridge.c` | App UI, BLE lifecycle, HID queue pump, Back / Up |
-| `protocol.c` / `protocol.h` | Frame sync + Variant A/B parse |
+| `protocol.c` / `protocol.h` | Frame sync + key down/up parse |
 | `usb_hid_bridge.c` / `.h` | USB HID mode + key down/up |
 | `application.fam` | FAP metadata (`stack_size` 4 KiB) |
 

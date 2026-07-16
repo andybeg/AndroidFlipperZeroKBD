@@ -1,7 +1,7 @@
 package com.flipperzero.androidkeyboard.ble
 
 /**
- * Variant B frames: explicit key down / key up.
+ * Wire frames: explicit key down / key up.
  *
  * FB 4B 03 [event][mods][keycode]
  * event: 0x01 = down, 0x02 = up

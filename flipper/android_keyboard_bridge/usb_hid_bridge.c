@@ -35,30 +35,6 @@ void usb_hid_panic_release(void) {
     furi_hal_hid_kb_release_all();
 }
 
-void usb_hid_apply_report(const uint8_t report[AKB_HID_REPORT_LEN]) {
-    if(!furi_hal_hid_is_connected()) {
-        return;
-    }
-
-    furi_hal_hid_kb_release_all();
-    furi_delay_ms(2);
-
-    const uint8_t mods = report[0];
-    const uint16_t packed = akb_pack_button(mods, 0);
-    if(mods != 0) {
-        furi_hal_hid_kb_press(packed);
-        furi_delay_ms(2);
-    }
-
-    for(uint8_t i = 0; i < HID_KB_MAX_KEYS; i++) {
-        const uint8_t key = report[2 + i];
-        if(key != 0) {
-            furi_hal_hid_kb_press(key);
-            furi_delay_ms(2);
-        }
-    }
-}
-
 void usb_hid_key_down(uint8_t mods, uint8_t keycode) {
     if(!furi_hal_hid_is_connected()) {
         return;
