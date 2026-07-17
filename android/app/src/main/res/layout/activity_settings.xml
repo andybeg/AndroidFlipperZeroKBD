@@ -20,7 +20,85 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/settings_output_title"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/settings_output_hint"
+            android:textSize="13sp" />
+
+        <RadioGroup
+            android:id="@+id/groupOutputMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/radioOutputFlipper"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_output_flipper"
+                android:textSize="15sp" />
+
+            <RadioButton
+                android:id="@+id/radioOutputDirect"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_output_direct"
+                android:textSize="15sp" />
+        </RadioGroup>
+
+        <LinearLayout
+            android:id="@+id/sectionHidName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_hid_name_title"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/settings_hid_name_hint"
+                android:textSize="13sp" />
+
+            <EditText
+                android:id="@+id/editHidName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/settings_hid_name_placeholder"
+                android:inputType="textCapWords"
+                android:maxLength="32"
+                android:maxLines="1"
+                android:singleLine="true" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/txtDeviceSectionTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/settings_paired_list"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtDeviceSectionHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:text="@string/settings_mac_hint"
             android:textSize="13sp" />
 
@@ -30,13 +108,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:textSize="14sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/settings_paired_list"
             android:textStyle="bold" />
 
         <LinearLayout

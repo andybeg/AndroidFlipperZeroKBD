@@ -8,8 +8,9 @@ PROJECT_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 FIRMWARE_DIR ?= $(PROJECT_ROOT)/../flipperzero-firmware
 ANDROID_DIR := $(PROJECT_ROOT)/android
 FLIPPER_APP_SRC := applications_user/android_keyboard_bridge
-APK_DEBUG := $(ANDROID_DIR)/app/build/outputs/apk/debug/FlipperZeroKbd-debug.apk
-APK_RELEASE := $(ANDROID_DIR)/app/build/outputs/apk/release/FlipperZeroKbd.apk
+VERSION_NAME := $(shell sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' "$(ANDROID_DIR)/app/build.gradle.kts" | head -1)
+APK_DEBUG := $(ANDROID_DIR)/app/build/outputs/apk/debug/FlipperZeroKbd-$(VERSION_NAME)-debug.apk
+APK_RELEASE := $(ANDROID_DIR)/app/build/outputs/apk/release/FlipperZeroKbd-$(VERSION_NAME).apk
 
 # Resolve JDK 17 without baking in a single machine-specific default.
 # - `make apk JAVA_HOME=/path/to/jdk-17` wins (command-line override)
@@ -47,9 +48,9 @@ help:
 	@echo "Android Keyboard Bridge"
 	@echo ""
 	@echo "Android:"
-	@echo "  make apk                 Build debug APK (FlipperZeroKbd-debug.apk)"
+	@echo "  make apk                 Build debug APK (FlipperZeroKbd-\$$VERSION-debug.apk)"
 	@echo "  make apk-install         Build and install debug APK via adb"
-	@echo "  make apk-release         Build release APK (FlipperZeroKbd.apk)"
+	@echo "  make apk-release         Build release APK (FlipperZeroKbd-\$$VERSION.apk)"
 	@echo "  make apk-release-install Build and install release APK via adb"
 	@echo "  make android-clean       Clean Android build outputs"
 	@echo ""

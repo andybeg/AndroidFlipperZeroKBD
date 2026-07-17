@@ -1,33 +1,52 @@
 # Android App
 
-Landscape fullscreen app that sends HID keyboard and mouse events to Flipper over BLE.
+Landscape fullscreen app that can send HID keyboard and mouse events either:
+
+1. **Via Flipper** — phone BLE Serial → Flipper → USB HID → PC  
+2. **Direct Bluetooth** — phone acts as a Bluetooth HID keyboard/mouse to the PC (no Flipper)
 
 ## Architecture
 
 ```
 KeyboardActivity (fullscreen landscape)
-  ├─ BLE button (top-left) → connect / disconnect
+  ├─ BLE/BT button (top-left) → connect / disconnect
   ├─ Mode switch (top-center) → Keyboard | Touchpad
-  ├─ Settings → Flipper MAC + enabled layouts
+  ├─ Settings → output mode + Flipper/PC device + layouts
   ├─ JsonKeyboardView ← assets/layouts/*.json
   └─ TouchpadView → relative mouse move / click / scroll
          │
          ▼
-  BridgeSession → FlipperBleClient → BLE Serial TX
+  BridgeSession
+    ├─ FlipperBleClient  (Flipper mode)
+    └─ DirectHidClient   (Direct Bluetooth HID, API 28+)
 ```
 
-There is **no** Android IME / system keyboard registration. The app is a normal Activity: input goes to the PC via Flipper, not into other phone apps.
+There is **no** Android IME / system keyboard registration. The app is a normal Activity: input goes to the PC, not into other phone apps.
 
 ## First-time setup
 
+### A) Via Flipper
+
 1. Pair Flipper in system Bluetooth settings (once).
 2. Install the APK (`make apk-install`).
-3. Open **Flipper KB Bridge**.
-4. Tap **⚙ Settings**, select the paired Flipper, enable layouts, **Save**.
+3. Open **Flipper KB Bridge** → **Settings**.
+4. Output: **Via Flipper**, select Flipper MAC, enable layouts → **Save**.
 5. On Flipper, launch **Android KB Bridge** (USB to PC).
-6. Tap the **top-left BLE button** until it turns green (**Connected**).
-7. Type on the keyboard, or switch to **Touchpad** (top center) for mouse control.
-8. Swipe left/right on the **space bar** to switch keyboard layouts.
+6. Tap the **top-left** connection button until green.
+7. Type or use Touchpad.
+
+### B) Direct Bluetooth to PC (no Flipper)
+
+1. Android **9+** phone that supports the HID Device profile (Pixel usually works; many OEMs do not).
+2. In the app **Settings**: Output → **Direct Bluetooth to PC**, optionally set **Bluetooth keyboard name**, Save (PC address is optional).
+3. Tap the **top-left** connection button.
+4. The app tries the **saved / previously paired** PC first.
+5. If none is known or reconnect fails, status becomes **Waiting for PC to pair…** and Android asks to make the phone discoverable.
+6. On the **PC**, open Bluetooth settings and pair / connect to this phone (HID keyboard/combo).
+7. After a successful connection the PC MAC is **saved automatically** for next time.
+8. Type or use Touchpad — events go straight to the PC over Bluetooth HID.
+
+If pairing never appears: confirm HID Device is supported on the phone, keep the app in foreground, accept the discoverable prompt, and initiate pairing from the PC.
 
 ## Modes (top center)
 
@@ -177,7 +196,10 @@ SharedPreferences file `akb_prefs`:
 
 | Key | Meaning |
 |-----|---------|
-| `flipper_mac` | Bluetooth address |
+| `output_mode` | `FLIPPER` or `DIRECT_BT` |
+| `flipper_mac` | Flipper Bluetooth address |
+| `host_mac` | PC Bluetooth address (direct mode) |
+| `hid_device_name` | Bluetooth name shown to the PC (direct mode, default `Flipper KB Bridge`) |
 | `enabled_layouts` | Comma-separated layout ids |
 | `current_layout` | Last active layout id |
 
@@ -185,18 +207,21 @@ SharedPreferences file `akb_prefs`:
 
 | Path | Role |
 |------|------|
-| `KeyboardActivity.kt` | Main UI, fullscreen, BLE, layout cycling, mode switch |
-| `SettingsActivity.kt` | Flipper MAC + enabled layouts |
+| `KeyboardActivity.kt` | Main UI, connection button, layout cycling, mode switch |
+| `SettingsActivity.kt` | Output mode + Flipper/PC device + layouts |
+| `BridgeSession.kt` | Routes input to Flipper or Direct HID |
+| `hid/DirectHidClient.kt` | BluetoothHidDevice keyboard/mouse |
+| `hid/HidReportDescriptor.kt` | HID report descriptor |
 | `keyboard/KeyboardLayoutLoader.kt` | Catalog + JSON parse |
 | `keyboard/JsonKeyboardView.kt` | Draw keys, sticky mods, space swipe |
 | `touchpad/TouchpadView.kt` | Relative mouse pad |
-| `ble/FlipperBleClient.kt` | GATT client + write queue |
-| `ble/BridgeProtocol.kt` | Frame encode (key + mouse) |
-| `prefs/AppPreferences.kt` | MAC + layout prefs |
+| `ble/FlipperBleClient.kt` | GATT client + write queue (Flipper mode) |
+| `ble/BridgeProtocol.kt` | Flipper wire frame encode |
+| `prefs/AppPreferences.kt` | Mode + device + layout prefs |
 | `assets/layouts/` | Layout JSON files + catalog |
 
 ## Build notes
 
 - JDK **17** required for Gradle (`make apk` auto-detects JDK 17).
 - System `gradle` is not required; use `android/gradlew`.
-- Release APK: `android/app/build/outputs/apk/release/FlipperZeroKbd.apk`
+- Release APK: `android/app/build/outputs/apk/release/FlipperZeroKbd-<version>.apk` (version from `versionName` in `app/build.gradle.kts`)

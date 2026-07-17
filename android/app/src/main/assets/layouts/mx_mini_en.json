@@ -62,7 +62,11 @@
       {"label": "⌃", "hid": "0x00", "mods": "0x01", "sticky_mod": true},
       {"label": "⌥", "hid": "0x00", "mods": "0x04", "sticky_mod": true},
       {"label": "⌘", "hid": "0x00", "mods": "0x08", "sticky_mod": true},
-      {"label": "␣", "hid": "0x2C", "span": 4.5, "role": "space"},
+      {"label": "␣", "hid": "0x2C", "span": 2.5, "role": "space"},
+      {"label": "←", "hid": "0x50"},
+      {"label": "↑", "hid": "0x52"},
+      {"label": "↓", "hid": "0x51"},
+      {"label": "→", "hid": "0x4F"},
       {"label": "⌘", "hid": "0x00", "mods": "0x08", "sticky_mod": true},
       {"label": "⌥", "hid": "0x00", "mods": "0x04", "sticky_mod": true},
       {"label": "☰", "hid": "0x65"}

@@ -11,8 +11,8 @@ android {
         applicationId = "com.flipperzero.androidkeyboard"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.2.0"
     }
 
     buildTypes {
@@ -42,13 +42,15 @@ android {
     }
 }
 
-// Meaningful APK file names, e.g. FlipperZeroKbd.apk / FlipperZeroKbd-debug.apk
+val appVersionName: String = android.defaultConfig.versionName ?: "0.0.0"
+
+// Meaningful APK names with version, e.g. FlipperZeroKbd-0.2.0.apk
 android.applicationVariants.configureEach {
     outputs.configureEach {
         val outputImpl = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
         outputImpl.outputFileName = when (buildType.name) {
-            "release" -> "FlipperZeroKbd.apk"
-            else -> "FlipperZeroKbd-${buildType.name}.apk"
+            "release" -> "FlipperZeroKbd-$appVersionName.apk"
+            else -> "FlipperZeroKbd-$appVersionName-${buildType.name}.apk"
         }
     }
 }

@@ -1,6 +1,6 @@
 # Android Keyboard → Flipper Zero → USB HID
 
-Bluetooth bridge: a landscape Android app sends keyboard and mouse HID events to Flipper Zero over BLE; Flipper injects them into a PC as a USB keyboard/mouse.
+Bluetooth bridge / direct HID: a landscape Android app can send keyboard and mouse events either through Flipper Zero (BLE Serial → USB HID) or **directly to a PC over Bluetooth HID** (no Flipper).
 
 ```
 Android app  ──BLE Serial──►  Flipper FAP  ──USB HID──►  PC
@@ -39,10 +39,11 @@ make apk-install
 
 Then on the phone:
 
-1. **Settings** → select paired Flipper, enable layouts → Save  
-2. Tap the **top-left BLE button** (green = ready)  
-3. Type on the keyboard, or use the top-center **Keyboard | Touchpad** switch  
-4. Swipe on the **space bar** to switch layouts (banner + toolbar show the active name)  
+1. **Settings** → choose **Via Flipper** or **Direct Bluetooth to PC** (Flipper MAC required; PC optional for Direct), enable layouts → Save  
+2. Tap the **top-left** connection button (green = ready; blue = waiting for PC to pair in Direct mode)  
+3. For Direct BT without a saved PC: accept discoverable, then pair/connect from the PC — host MAC is saved automatically  
+4. Type on the keyboard, or use the top-center **Keyboard | Touchpad** switch  
+5. Swipe on the **space bar** to switch layouts (banner + toolbar show the active name)  
 
 Details: `docs/ANDROID.md`, `docs/FLIPPER.md`.
 
@@ -56,7 +57,7 @@ Layout screens are for convenience only — they do not switch the Mac/PC input 
 make help
 make apk
 make apk-install
-make apk-release          # → FlipperZeroKbd.apk
+make apk-release          # → FlipperZeroKbd-<version>.apk
 make apk-release-install
 make flipper-link
 make flipper-build

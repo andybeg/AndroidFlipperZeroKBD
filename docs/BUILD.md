@@ -60,8 +60,8 @@ Requirements:
 
 | Command | Output |
 |---------|--------|
-| `make apk` | `android/app/build/outputs/apk/debug/FlipperZeroKbd-debug.apk` |
-| `make apk-release` | `android/app/build/outputs/apk/release/FlipperZeroKbd.apk` |
+| `make apk` | `android/app/build/outputs/apk/debug/FlipperZeroKbd-<version>-debug.apk` |
+| `make apk-release` | `android/app/build/outputs/apk/release/FlipperZeroKbd-<version>.apk` |
 
 Release is currently signed with the **debug keystore** so you can sideload without creating a Play Store key.
 
@@ -71,7 +71,7 @@ Release is currently signed with the **debug keystore** so you can sideload with
 cd /path/to/AndroidKeyboard
 make apk                 # debug
 make apk-install
-make apk-release         # release → FlipperZeroKbd.apk
+make apk-release         # release → FlipperZeroKbd-<version>.apk
 make apk-release-install
 ```
 
@@ -100,7 +100,7 @@ gradle wrapper --gradle-version 8.7
 Install release:
 
 ```bash
-adb install -r android/app/build/outputs/apk/release/FlipperZeroKbd.apk
+adb install -r android/app/build/outputs/apk/release/FlipperZeroKbd-*.apk
 ```
 
 ## 2. Use the Android app (no system IME)

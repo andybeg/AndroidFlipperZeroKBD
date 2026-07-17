@@ -16,7 +16,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.flipperzero.androidkeyboard.ble.BlePermissions
-import com.flipperzero.androidkeyboard.ble.FlipperBleClient
 import com.flipperzero.androidkeyboard.databinding.ActivityKeyboardBinding
 import com.flipperzero.androidkeyboard.keyboard.JsonKeyboardView
 import com.flipperzero.androidkeyboard.keyboard.KeyboardKey
@@ -26,12 +25,11 @@ import com.flipperzero.androidkeyboard.keyboard.LayoutInfo
 import com.flipperzero.androidkeyboard.prefs.AppPreferences
 import com.flipperzero.androidkeyboard.touchpad.TouchpadView
 
-class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
+class KeyboardActivity : AppCompatActivity(), BridgeSession.Listener {
 
     private enum class InputMode { KEYBOARD, TOUCHPAD }
 
     private lateinit var binding: ActivityKeyboardBinding
-    private lateinit var bleClient: FlipperBleClient
     private lateinit var prefs: AppPreferences
 
     private var catalog: List<LayoutInfo> = emptyList()
@@ -48,6 +46,12 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
         }
     }
 
+    private val discoverableLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) {
+        // User may accept or deny discoverable; we keep WAITING_PAIRING either way.
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -57,7 +61,7 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
         setContentView(binding.root)
 
         prefs = AppPreferences(this)
-        bleClient = BridgeSession.getClient(this)
+        BridgeSession.init(this)
         catalog = KeyboardLayoutLoader.loadCatalog(this)
 
         binding.bleDot.background = GradientDrawable().apply {
@@ -78,14 +82,27 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
 
         setInputMode(InputMode.KEYBOARD)
         ensurePermissions()
-        renderBleState(bleClient.state, bleClient.statusMessage)
+        renderConnectionState(BridgeSession.state, BridgeSession.statusMessage)
     }
 
     override fun onResume() {
         super.onResume()
         enterFullscreen()
-        bleClient.setListener(this)
-        renderBleState(bleClient.state, bleClient.statusMessage)
+        BridgeSession.setListener(this)
+        BridgeSession.setDiscoverableRequestListener(
+            object : BridgeSession.DiscoverableRequestListener {
+                override fun onDiscoverableNeeded(intent: Intent) {
+                    runOnUiThread {
+                        try {
+                            discoverableLauncher.launch(intent)
+                        } catch (_: Exception) {
+                            toast(getString(R.string.bt_discoverable_failed))
+                        }
+                    }
+                }
+            },
+        )
+        renderConnectionState(BridgeSession.state, BridgeSession.statusMessage)
         reloadEnabledLayouts()
     }
 
@@ -98,12 +115,13 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
 
     override fun onPause() {
         binding.root.removeCallbacks(hideBannerRunnable)
-        bleClient.setListener(null)
+        BridgeSession.setListener(null)
+        BridgeSession.setDiscoverableRequestListener(null)
         super.onPause()
     }
 
-    override fun onStateChanged(state: FlipperBleClient.State, message: String) {
-        runOnUiThread { renderBleState(state, message) }
+    override fun onStateChanged(state: BridgeSession.State, message: String) {
+        runOnUiThread { renderConnectionState(state, message) }
     }
 
     private fun reloadEnabledLayouts() {
@@ -193,46 +211,60 @@ class KeyboardActivity : AppCompatActivity(), FlipperBleClient.Listener {
     }
 
     private fun onBleButtonClicked() {
-        when (bleClient.state) {
-            FlipperBleClient.State.READY,
-            FlipperBleClient.State.CONNECTED,
-            FlipperBleClient.State.CONNECTING,
-            -> bleClient.disconnect()
+        when (BridgeSession.state) {
+            BridgeSession.State.READY,
+            BridgeSession.State.CONNECTED,
+            BridgeSession.State.CONNECTING,
+            BridgeSession.State.WAITING_PAIRING,
+            -> BridgeSession.disconnect()
 
-            FlipperBleClient.State.DISCONNECTED,
-            FlipperBleClient.State.ERROR,
+            BridgeSession.State.DISCONNECTED,
+            BridgeSession.State.ERROR,
             -> connectConfigured()
         }
     }
 
     @SuppressLint("MissingPermission")
     private fun connectConfigured() {
-        val mac = prefs.flipperMac
-        if (mac.isNullOrBlank()) {
-            toast(getString(R.string.settings_mac_required))
-            startActivity(Intent(this, SettingsActivity::class.java))
-            return
+        when (prefs.outputMode) {
+            OutputMode.FLIPPER -> {
+                if (prefs.flipperMac.isNullOrBlank()) {
+                    toast(getString(R.string.settings_mac_required))
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                    return
+                }
+            }
+            OutputMode.DIRECT_BT -> {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                    toast(getString(R.string.settings_direct_needs_api28))
+                    return
+                }
+                // hostMac optional: reconnect if known, otherwise wait for pairing
+            }
         }
         if (!ensurePermissions()) return
-        bleClient.connectAddress(mac)
+        BridgeSession.connect(this)
     }
 
-    private fun renderBleState(state: FlipperBleClient.State, message: String) {
+    private fun renderConnectionState(state: BridgeSession.State, message: String) {
         binding.txtBleStatus.text = when (state) {
-            FlipperBleClient.State.READY -> getString(R.string.ble_ready)
-            FlipperBleClient.State.CONNECTING -> getString(R.string.ble_connecting)
-            FlipperBleClient.State.CONNECTED -> getString(R.string.ble_connected)
-            FlipperBleClient.State.ERROR -> message
-            FlipperBleClient.State.DISCONNECTED -> getString(R.string.ble_disconnected)
+            BridgeSession.State.READY -> getString(R.string.ble_ready)
+            BridgeSession.State.CONNECTING -> getString(R.string.ble_connecting)
+            BridgeSession.State.CONNECTED -> getString(R.string.ble_connected)
+            BridgeSession.State.WAITING_PAIRING ->
+                message.ifBlank { getString(R.string.bt_waiting_pairing) }
+            BridgeSession.State.ERROR -> message
+            BridgeSession.State.DISCONNECTED -> getString(R.string.ble_disconnected)
         }
 
         val color = when (state) {
-            FlipperBleClient.State.READY -> "#4CAF50".toColorInt()
-            FlipperBleClient.State.CONNECTING,
-            FlipperBleClient.State.CONNECTED,
+            BridgeSession.State.READY -> "#4CAF50".toColorInt()
+            BridgeSession.State.CONNECTING,
+            BridgeSession.State.CONNECTED,
             -> "#FF9800".toColorInt()
-            FlipperBleClient.State.ERROR -> "#F44336".toColorInt()
-            FlipperBleClient.State.DISCONNECTED -> "#777777".toColorInt()
+            BridgeSession.State.WAITING_PAIRING -> "#2196F3".toColorInt()
+            BridgeSession.State.ERROR -> "#F44336".toColorInt()
+            BridgeSession.State.DISCONNECTED -> "#777777".toColorInt()
         }
 
         (binding.bleDot.background as? GradientDrawable)?.setColor(color)
