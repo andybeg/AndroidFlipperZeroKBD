@@ -6,6 +6,10 @@ Bluetooth bridge / direct HID: a landscape Android app can send keyboard and mou
 Android app  ──BLE Serial──►  Flipper FAP  ──USB HID──►  PC
 ```
 
+## Motivation
+
+I often work with devices that ship without a keyboard and needed something universal — a keyboard that can reach hosts over as many interfaces as practical (USB via Flipper today, direct Bluetooth HID from the phone, more later). Dedicated mini keyboards help, but their radio dongles kept going missing, which got old fast. A phone is almost always in reach, and a Flipper Zero is harder to lose than a tiny USB stick — so the phone becomes the keys, and Flipper (or Bluetooth) is the cable into the target.
+
 ## Components
 
 | Path | Description |
