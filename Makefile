@@ -8,6 +8,9 @@ PROJECT_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 FIRMWARE_DIR ?= $(PROJECT_ROOT)/../flipperzero-firmware
 ANDROID_DIR := $(PROJECT_ROOT)/android
 FLIPPER_APP_SRC := applications_user/android_keyboard_bridge
+FLIPPER_RUST_DIR := $(PROJECT_ROOT)/flipper/android_keyboard_bridge_rust
+FLIPPER_RUST_BIN := $(FLIPPER_RUST_DIR)/target/thumbv7em-none-eabihf/release/android_keyboard_bridge_rust
+FLIPPER_RUST_FAP := $(FLIPPER_RUST_DIR)/android_keyboard_bridge_rust.fap
 VERSION_NAME := $(shell sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' "$(ANDROID_DIR)/app/build.gradle.kts" | head -1)
 APK_DEBUG := $(ANDROID_DIR)/app/build/outputs/apk/debug/FlipperZeroKbd-$(VERSION_NAME)-debug.apk
 APK_RELEASE := $(ANDROID_DIR)/app/build/outputs/apk/release/FlipperZeroKbd-$(VERSION_NAME).apk
@@ -42,7 +45,7 @@ else
 GRADLE_ENV :=
 endif
 
-.PHONY: help apk apk-install apk-release apk-release-install flipper-link flipper-build flipper-flash flipper-launch flipper-cli android-clean
+.PHONY: help apk apk-install apk-release apk-release-install flipper-link flipper-build flipper-flash flipper-launch flipper-cli flipper-rust-build android-clean
 
 help:
 	@echo "Android Keyboard Bridge"
@@ -54,12 +57,15 @@ help:
 	@echo "  make apk-release-install Build and install release APK via adb"
 	@echo "  make android-clean       Clean Android build outputs"
 	@echo ""
-	@echo "Flipper (FIRMWARE_DIR=$(FIRMWARE_DIR)):"
-	@echo "  make flipper-link     Symlink FAP into firmware applications_user/"
-	@echo "  make flipper-build    Build FAP only"
+	@echo "Flipper C FAP (default, FIRMWARE_DIR=$(FIRMWARE_DIR)):"
+	@echo "  make flipper-link     Symlink C FAP into firmware applications_user/"
+	@echo "  make flipper-build    Build C FAP only"
 	@echo "  make flipper-flash    Flash firmware from local checkout"
-	@echo "  make flipper-launch   Build, upload, and launch FAP on Flipper"
+	@echo "  make flipper-launch   Build, upload, and launch C FAP on Flipper"
 	@echo "  make flipper-cli      Open Flipper USB CLI (connectivity check)"
+	@echo ""
+	@echo "Flipper Rust FAP (educational parallel port):"
+	@echo "  make flipper-rust-build  cargo build --release → .fap next to sources"
 
 define require_jdk17
 	@if [ -n "$(JAVA_HOME)" ]; then \
@@ -113,3 +119,12 @@ flipper-launch:
 flipper-cli:
 	@test -d "$(FIRMWARE_DIR)" || (echo "Missing firmware repo: $(FIRMWARE_DIR)" && exit 1)
 	cd "$(FIRMWARE_DIR)" && python3 scripts/serial_cli.py -p auto
+
+flipper-rust-build:
+	@command -v cargo >/dev/null || (echo "cargo not found — install Rust via rustup" && exit 1)
+	@rustup target list --installed | grep -q thumbv7em-none-eabihf || \
+		rustup target add thumbv7em-none-eabihf
+	cd "$(FLIPPER_RUST_DIR)" && cargo build --release
+	cp "$(FLIPPER_RUST_BIN)" "$(FLIPPER_RUST_FAP)"
+	@ls -lh "$(FLIPPER_RUST_FAP)"
+	@echo "Copy $(FLIPPER_RUST_FAP) to Flipper SD (Apps). C FAP remains default for flipper-launch."

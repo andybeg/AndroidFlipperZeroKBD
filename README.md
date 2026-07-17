@@ -14,7 +14,8 @@ Android app  ──BLE Serial──►  Flipper FAP  ──USB HID──►  PC
 | `docs/ANDROID.md` | Android app UI, Settings, multi-layout JSON keyboards |
 | `docs/FLIPPER.md` | FAP behavior, USB identity, BLE/RPC notes |
 | `docs/PROTOCOL.md` | BLE UUIDs and frame format |
-| `flipper/android_keyboard_bridge/` | Flipper FAP sources |
+| `flipper/android_keyboard_bridge/` | Flipper FAP sources (**C** — production / default) |
+| `flipper/android_keyboard_bridge_rust/` | Same FAP in **Rust**, for educational purposes only |
 | `android/` | Android app (`assets/layouts/`) |
 
 ## Requirements
@@ -63,6 +64,7 @@ make flipper-link
 make flipper-build
 make flipper-flash
 make flipper-launch
+make flipper-rust-build   # optional educational Rust FAP (.fap)
 make flipper-cli
 ```
 

@@ -95,6 +95,22 @@ Forced on uses `sequence_display_backlight_enforce_on`; off restores `sequence_d
 | `usb_hid_bridge.c` / `.h` | USB HID keyboard + mouse |
 | `application.fam` | FAP metadata (`stack_size` 4 KiB) |
 
+## Rust parallel port (educational)
+
+There is also a **Rust** implementation written **for educational purposes**
+(same protocol and behavior, denser comments / safe-first structure):
+
+`flipper/android_keyboard_bridge_rust/`
+
+It uses [flipperzero-rs](https://github.com/flipperzero-rs/flipperzero) (`flipperzero` 0.16 / API 87.1). Comments are denser there on purpose (learning / comparison). The C FAP remains what `make flipper-launch` builds.
+
+```bash
+make flipper-rust-build
+# → flipper/android_keyboard_bridge_rust/android_keyboard_bridge_rust.fap
+```
+
+Do not run C and Rust FAPs at the same time (both claim BLE Serial + USB HID).
+
 ## Build / deploy
 
 See `docs/BUILD.md`. Shortcuts from project root:
@@ -103,4 +119,5 @@ See `docs/BUILD.md`. Shortcuts from project root:
 make flipper-link
 make flipper-build
 make flipper-launch
+make flipper-rust-build   # optional
 ```

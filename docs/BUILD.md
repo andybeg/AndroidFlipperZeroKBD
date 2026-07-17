@@ -17,7 +17,8 @@ Assumes this repo and a local `flipperzero-firmware` checkout as siblings (overr
 | This project | `.` (repo root) |
 | Firmware tree | `../flipperzero-firmware` |
 | Android app | `android/` |
-| FAP sources | `flipper/android_keyboard_bridge/` |
+| FAP sources (C, default) | `flipper/android_keyboard_bridge/` |
+| FAP sources (Rust port) | `flipper/android_keyboard_bridge_rust/` |
 
 ## Makefile shortcuts
 
@@ -161,6 +162,17 @@ cd /path/to/flipperzero-firmware
 ```
 
 Or: `make flipper-launch`.
+
+### Optional Rust FAP
+
+Same BLE protocol; denser comments for reading (`flipperzero-rs` 0.16 / API 87.1):
+
+```bash
+rustup target add thumbv7em-none-eabihf
+make flipper-rust-build
+```
+
+Produces `flipper/android_keyboard_bridge_rust/android_keyboard_bridge_rust.fap` — copy to the Flipper SD Apps folder. Do not run C and Rust FAPs together. See `flipper/android_keyboard_bridge_rust/README.md`.
 
 If the Flipper is not found: reconnect USB, close qFlipper, check CLI:
 
