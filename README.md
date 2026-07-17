@@ -71,3 +71,7 @@ Full instructions: `docs/BUILD.md`.
 ## Protocol
 
 Keyboard taps use `key_down` / `key_up`; touchpad uses mouse move / button / scroll frames (same 6-byte header). See `docs/PROTOCOL.md`.
+
+## Credits
+
+Built with help from [Cursor](https://cursor.com).
