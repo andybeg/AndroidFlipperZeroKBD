@@ -10,6 +10,40 @@ Android app  ──BLE Serial──►  Flipper FAP  ──USB HID──►  PC
 
 I often work with devices that ship without a keyboard and needed something universal — a keyboard that can reach hosts over as many interfaces as practical (USB via Flipper today, direct Bluetooth HID from the phone, more later). Dedicated mini keyboards help, but their radio dongles kept going missing, which got old fast. A phone is almost always in reach, and a Flipper Zero is harder to lose than a tiny USB stick — so the phone becomes the keys, and Flipper (or Bluetooth) is the cable into the target.
 
+## Screenshots
+
+### Android app
+
+Keyboard (macOS EN), disconnected:
+
+![Keyboard macOS EN](docs/screenshots/01-keyboard-en.png)
+
+Layout switch banner after swiping the space bar:
+
+![Layout switch banner](docs/screenshots/02-layout-switch-banner.png)
+
+Connected (macOS RU):
+
+![Keyboard connected](docs/screenshots/03-keyboard-connected.png)
+
+Touchpad mode:
+
+![Touchpad](docs/screenshots/04-touchpad.png)
+
+Settings — output mode (Flipper vs Direct Bluetooth) and keyboard name:
+
+![Settings output](docs/screenshots/05-settings-output.png)
+
+Settings — Direct Bluetooth host list:
+
+![Settings Direct BT host](docs/screenshots/08-settings-direct-bt.png)
+
+Settings — enabled layouts to cycle:
+
+![Settings layouts](docs/screenshots/06-settings-layouts.png)
+
+More screenshots: `docs/screenshots/`.
+
 ## Components
 
 | Path | Description |
@@ -18,6 +52,7 @@ I often work with devices that ship without a keyboard and needed something univ
 | `docs/ANDROID.md` | Android app UI, Settings, multi-layout JSON keyboards |
 | `docs/FLIPPER.md` | FAP behavior, USB identity, BLE/RPC notes |
 | `docs/PROTOCOL.md` | BLE UUIDs and frame format |
+| `docs/screenshots/` | Android UI screenshots |
 | `flipper/android_keyboard_bridge/` | Flipper FAP sources (**C** — production / default) |
 | `flipper/android_keyboard_bridge_rust/` | Same FAP in **Rust**, for educational purposes only |
 | `android/` | Android app (`assets/layouts/`) |

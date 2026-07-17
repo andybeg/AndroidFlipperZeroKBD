@@ -23,6 +23,10 @@ KeyboardActivity (fullscreen landscape)
 
 There is **no** Android IME / system keyboard registration. The app is a normal Activity: input goes to the PC, not into other phone apps.
 
+## Screenshots
+
+See `docs/screenshots/` and the **Screenshots** section in the root `README.md` (keyboard, touchpad, Settings for Flipper / Direct Bluetooth / layouts).
+
 ## First-time setup
 
 ### A) Via Flipper
