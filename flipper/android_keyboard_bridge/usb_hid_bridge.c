@@ -20,7 +20,11 @@ void usb_hid_bridge_start(void) {
 }
 
 void usb_hid_bridge_stop(void) {
-    usb_hid_panic_release();
+    // Only release keys while the host is still there — after unplug,
+    // hid_send_report can sit on the IN semaphore until timeout.
+    if(furi_hal_hid_is_connected()) {
+        usb_hid_panic_release();
+    }
     if(usb_mode_prev) {
         furi_hal_usb_set_config(usb_mode_prev, NULL);
         usb_mode_prev = NULL;
@@ -32,6 +36,9 @@ bool usb_hid_bridge_is_usb_connected(void) {
 }
 
 void usb_hid_panic_release(void) {
+    if(!furi_hal_hid_is_connected()) {
+        return;
+    }
     furi_hal_hid_kb_release_all();
     furi_hal_hid_mouse_release(HID_MOUSE_BTN_LEFT | HID_MOUSE_BTN_RIGHT | HID_MOUSE_BTN_WHEEL);
 }

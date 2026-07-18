@@ -293,13 +293,18 @@ static void akb_stop_ble(AndroidKeyboardBridge* app) {
     if(app->profile) {
         ble_profile_serial_set_rpc_active(app->profile, false);
         ble_profile_serial_set_event_callback(app->profile, 0, NULL, NULL);
+        // Drop the phone link before restoring the default profile — otherwise
+        // restore can sit in GAP teardown for a long time while still bonded/active.
+        bt_disconnect(app->bt);
         bt_profile_restore_default(app->bt);
         app->profile = NULL;
     }
     app->ble_active = false;
     app->ble_phone_connected = false;
-    usb_hid_panic_release();
 }
+
+/** After USB was once up, leave if it stays down (cable unplug). */
+#define AKB_USB_LOST_EXIT_MS 400
 
 int32_t android_keyboard_bridge_app(void* p) {
     UNUSED(p);
@@ -310,9 +315,28 @@ int32_t android_keyboard_bridge_app(void* p) {
     akb_start_ble(app);
     view_port_update(app->view_port);
 
+    bool usb_was_connected = false;
+    uint32_t usb_lost_since = 0;
     AkbHidCmd hid_cmd;
     while(!app->exit_requested) {
-        app->usb_connected = usb_hid_bridge_is_usb_connected();
+        const bool usb_now = usb_hid_bridge_is_usb_connected();
+        app->usb_connected = usb_now;
+
+        if(usb_now) {
+            usb_was_connected = true;
+            usb_lost_since = 0;
+        } else if(usb_was_connected) {
+            if(usb_lost_since == 0) {
+                usb_lost_since = furi_get_tick();
+                furi_check(furi_mutex_acquire(app->mutex, FuriWaitForever) == FuriStatusOk);
+                snprintf(app->status_line, sizeof(app->status_line), "USB lost — exiting");
+                furi_mutex_release(app->mutex);
+                view_port_update(app->view_port);
+            } else if((furi_get_tick() - usb_lost_since) >= AKB_USB_LOST_EXIT_MS) {
+                app->exit_requested = true;
+                break;
+            }
+        }
 
         if(app->reclaim_ticks > 0) {
             akb_claim_serial_rx(app);
@@ -330,6 +354,16 @@ int32_t android_keyboard_bridge_app(void* p) {
             break;
         }
 
+        // Skip HID apply when USB is already gone — drain is pointless and
+        // any stale "connected" edge case only slows Back / auto-exit.
+        if(!usb_now) {
+            while(furi_message_queue_get(app->hid_queue, &hid_cmd, 0) == FuriStatusOk) {
+            }
+            furi_delay_ms(5);
+            view_port_update(app->view_port);
+            continue;
+        }
+
         if(furi_message_queue_get(app->hid_queue, &hid_cmd, 0) == FuriStatusOk) {
             const bool needs_gap = (hid_cmd.type == AkbHidCmdKeyDown ||
                                     hid_cmd.type == AkbHidCmdKeyUp);
@@ -344,6 +378,10 @@ int32_t android_keyboard_bridge_app(void* p) {
         }
 
         view_port_update(app->view_port);
+    }
+
+    // Drop queued frames before teardown so BLE RX cannot keep us busy.
+    while(furi_message_queue_get(app->hid_queue, &hid_cmd, 0) == FuriStatusOk) {
     }
 
     akb_stop_ble(app);

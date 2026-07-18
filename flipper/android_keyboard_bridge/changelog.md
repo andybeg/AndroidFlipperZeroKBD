@@ -1,3 +1,9 @@
+## v0.4
+
+- Exit promptly when USB cable is unplugged (after a short debounce)
+- Faster teardown: skip HID release when host is gone; disconnect BLE before profile restore
+- Drain HID queue on USB loss / exit so leftover frames cannot stall Back
+
 ## v0.3
 
 - Catalog packaging polish: storage required only when screenshots are enabled

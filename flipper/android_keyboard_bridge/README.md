@@ -24,6 +24,8 @@ Receive keyboard and mouse events from the companion Android app over **BLE Seri
 - **Up** — toggle forced backlight
 - **Down ×3** — save screenshot (only if built with AKB_SCREENSHOT=1)
 
+Unplugging USB also exits the app after a short delay (once USB has been connected).
+
 ## Notes
 
 - While this FAP owns USB HID, the Flipper serial port may disappear on the host — normal.
