@@ -1,6 +1,11 @@
+## v0.5
+
+- Exit is Back-only again (USB unplug no longer leaves the app)
+- Keep fast teardown: skip HID release without a host; disconnect BLE before restore; drain HID queue when USB is down
+
 ## v0.4
 
-- Exit promptly when USB cable is unplugged (after a short debounce)
+- Exit promptly when USB cable is unplugged (after a short debounce) — reverted in v0.5
 - Faster teardown: skip HID release when host is gone; disconnect BLE before profile restore
 - Drain HID queue on USB loss / exit so leftover frames cannot stall Back
 
