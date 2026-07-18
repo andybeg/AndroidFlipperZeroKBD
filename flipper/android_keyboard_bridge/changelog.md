@@ -2,6 +2,7 @@
 
 - Exit is Back-only again (USB unplug no longer leaves the app)
 - Keep fast teardown: skip HID release without a host; disconnect BLE before restore; drain HID queue when USB is down
+- Catalog README links the companion APK to the matching GitHub release
 
 ## v0.4
 
