@@ -63,6 +63,7 @@ help:
 	@echo "  make flipper-flash    Flash firmware from local checkout"
 	@echo "  make flipper-launch   Build, upload, and launch C FAP on Flipper"
 	@echo "  make flipper-cli      Open Flipper USB CLI (connectivity check)"
+	@echo "    AKB_SCREENSHOT=1    Enable triple-Down screenshot in C FAP (env)"
 	@echo ""
 	@echo "Flipper Rust FAP (educational parallel port):"
 	@echo "  make flipper-rust-build  cargo build --release → .fap next to sources"
@@ -106,7 +107,10 @@ flipper-link:
 
 flipper-build:
 	@test -x "$(FBT)" || (echo "Missing fbt: $(FBT)" && exit 1)
-	cd "$(FIRMWARE_DIR)" && ./fbt build APPSRC=$(FLIPPER_APP_SRC)
+	@if [ "$(AKB_SCREENSHOT)" = "1" ] || [ "$(AKB_SCREENSHOT)" = "y" ] || [ "$(AKB_SCREENSHOT)" = "yes" ]; then \
+		echo "Building C FAP with AKB_SCREENSHOT (triple Down → PBM on SD)"; \
+	fi
+	cd "$(FIRMWARE_DIR)" && AKB_SCREENSHOT="$(AKB_SCREENSHOT)" ./fbt build APPSRC=$(FLIPPER_APP_SRC)
 
 flipper-flash:
 	@test -x "$(FBT)" || (echo "Missing fbt: $(FBT)" && exit 1)
@@ -114,7 +118,10 @@ flipper-flash:
 
 flipper-launch:
 	@test -x "$(FBT)" || (echo "Missing fbt: $(FBT)" && exit 1)
-	cd "$(FIRMWARE_DIR)" && ./fbt launch APPSRC=$(FLIPPER_APP_SRC)
+	@if [ "$(AKB_SCREENSHOT)" = "1" ] || [ "$(AKB_SCREENSHOT)" = "y" ] || [ "$(AKB_SCREENSHOT)" = "yes" ]; then \
+		echo "Launching C FAP with AKB_SCREENSHOT (triple Down → PBM on SD)"; \
+	fi
+	cd "$(FIRMWARE_DIR)" && AKB_SCREENSHOT="$(AKB_SCREENSHOT)" ./fbt launch APPSRC=$(FLIPPER_APP_SRC)
 
 flipper-cli:
 	@test -d "$(FIRMWARE_DIR)" || (echo "Missing firmware repo: $(FIRMWARE_DIR)" && exit 1)

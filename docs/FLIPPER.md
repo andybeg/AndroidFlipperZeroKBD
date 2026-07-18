@@ -2,6 +2,18 @@
 
 External app (`android_keyboard_bridge.fap`) that receives BLE Serial frames from the phone and injects USB HID keyboard reports into the host PC.
 
+## Screenshots
+
+Waiting for the phone (USB already connected to the PC). Hint line shows optional `Dn3=shot` when built with `AKB_SCREENSHOT=1`:
+
+![Flipper waiting for phone](screenshots/flipper-waiting.png)
+
+Phone linked over BLE Serial — ready to type:
+
+![Flipper phone connected](screenshots/flipper-connected.png)
+
+(Captured on-device via triple **Down**; files under `docs/screenshots/`.)
+
 ## Runtime behavior
 
 On start:
@@ -22,11 +34,11 @@ On stop / Back:
 
 | Line | Meaning |
 |------|---------|
-| Status text | e.g. `Waiting for phone…`, `Last RX: N bytes`, `HID down key=XX` |
+| Status text | e.g. `Waiting for phone…`, `Phone linked — type now`, `Shot saved` |
 | `USB: connected` / `waiting` | Host accepted the HID interface (`furi_hal_hid_is_connected`) |
 | `Phone: connected` / `waiting` | BLE GAP connected (or first RX seen) |
 | `Frames:N HID:M` | Parsed protocol frames vs HID commands applied on the app thread |
-| Hint line | `Up=light  Back=exit` — `light*` means backlight is forced on |
+| Hint line | Default: `Up=light  Back=exit`. With screenshots: `Up=light Dn3=shot Back` (`light*` = backlight forced on) |
 
 Useful checks while typing:
 
@@ -77,23 +89,68 @@ Mouse events map to `furi_hal_hid_mouse_move` / `press` / `release` / `scroll`. 
 
 ## Hardware buttons (input pubsub)
 
-Both actions use a subscription to `RECORD_INPUT_EVENTS` (hardware buttons after debounce), not the ViewPort input path — so they still work while the main loop is busy applying HID.
+Actions use a subscription to `RECORD_INPUT_EVENTS` (hardware buttons after debounce), not the ViewPort input path — so they still work while the main loop is busy applying HID.
 
 | Button | Action |
 |--------|--------|
 | **Back** | Exit FAP (`exit_requested`). Accepts Short / Long / Press. |
 | **Up** | Toggle forced backlight on/off. Short only (avoids double-toggle). |
+| **Down ×3** | *(optional)* Save screen to SD as PBM — only if built with `AKB_SCREENSHOT=1`. |
 
 Forced on uses `sequence_display_backlight_enforce_on`; off restores `sequence_display_backlight_enforce_auto`. Leaving the app always restores auto.
+
+## Optional on-device screenshots
+
+Off by default (compiled out via `#ifdef AKB_SCREENSHOT`). Enable when building/launching:
+
+```bash
+AKB_SCREENSHOT=1 make flipper-build
+AKB_SCREENSHOT=1 make flipper-launch
+```
+
+`application.fam` reads the `AKB_SCREENSHOT` environment variable and adds the `AKB_SCREENSHOT` C define (and a slightly larger stack).
+
+### How to capture
+
+1. Run a build with `AKB_SCREENSHOT=1`.
+2. Open **Android KB Bridge** on the Flipper.
+3. Press **Down** three times quickly (~within 900 ms).
+4. Status becomes `Shot saved` (success beep) or `Shot failed`.
+
+### Where files are stored
+
+On the microSD card:
+
+```text
+apps_data/android_keyboard_bridge/shot_YYYYMMDD_HHMMSS.pbm
+```
+
+Firmware path: `/ext/apps_data/android_keyboard_bridge/…`  
+In qFlipper / File Manager: **SD Card → apps_data → android_keyboard_bridge**.
+
+Format is **PBM P4** (128×64 monochrome). Convert on a computer:
+
+```bash
+# ImageMagick
+magick shot_20260718_080702.pbm shot.png
+# sharper for docs (integer scale, no blur)
+magick shot_20260718_080702.pbm -filter point -resize 400% shot.png
+
+# or Pillow
+python3 -c "from PIL import Image; Image.open('shot.pbm').save('shot.png')"
+```
+
+Install ImageMagick on macOS: `brew install imagemagick`.
 
 ## Source map
 
 | File | Role |
 |------|------|
-| `android_keyboard_bridge.c` | App UI, BLE lifecycle, HID queue pump, Back / Up |
+| `android_keyboard_bridge.c` | App UI, BLE lifecycle, HID queue pump, Back / Up / optional Down |
 | `protocol.c` / `protocol.h` | Frame sync + key/mouse parse |
 | `usb_hid_bridge.c` / `.h` | USB HID keyboard + mouse |
-| `application.fam` | FAP metadata (`stack_size` 4 KiB) |
+| `screenshot.c` / `.h` | Optional triple-Down PBM capture (`#ifdef AKB_SCREENSHOT`) |
+| `application.fam` | FAP metadata; reads `AKB_SCREENSHOT` env for `cdefines` |
 
 ## Rust parallel port (educational)
 
@@ -102,7 +159,7 @@ There is also a **Rust** implementation written **for educational purposes**
 
 `flipper/android_keyboard_bridge_rust/`
 
-It uses [flipperzero-rs](https://github.com/flipperzero-rs/flipperzero) (`flipperzero` 0.16 / API 87.1). Comments are denser there on purpose (learning / comparison). The C FAP remains what `make flipper-launch` builds.
+It uses [flipperzero-rs](https://github.com/flipperzero-rs/flipperzero) (`flipperzero` 0.16 / API 87.1). Comments are denser there on purpose (learning / comparison). The C FAP remains what `make flipper-launch` builds. The optional screenshot feature is **C-only** for now.
 
 ```bash
 make flipper-rust-build
@@ -118,6 +175,6 @@ See `docs/BUILD.md`. Shortcuts from project root:
 ```bash
 make flipper-link
 make flipper-build
-make flipper-launch
-make flipper-rust-build   # optional
+AKB_SCREENSHOT=1 make flipper-launch   # optional capture build
+make flipper-rust-build                # optional educational Rust FAP
 ```

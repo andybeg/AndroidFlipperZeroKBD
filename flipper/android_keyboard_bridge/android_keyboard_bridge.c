@@ -4,6 +4,7 @@
 #include <profiles/serial_profile.h>
 
 #include "usb_hid_bridge.h"
+#include "screenshot.h"
 
 #define AKB_SERIAL_BUFFER_SIZE 128
 #define AKB_HID_QUEUE_SIZE     64
@@ -43,7 +44,14 @@ static void akb_input_events_callback(const void* value, void* context) {
     // Short only: Press+Short would double-toggle on one physical click.
     if(event->key == InputKeyUp && event->type == InputTypeShort) {
         akb_set_backlight_forced(app, !app->backlight_forced);
+        return;
     }
+
+#ifdef AKB_SCREENSHOT
+    if(event->key == InputKeyDown && event->type == InputTypeShort) {
+        akb_screenshot_on_down_short(app);
+    }
+#endif
 }
 
 static void akb_draw_callback(Canvas* canvas, void* ctx) {
@@ -71,11 +79,19 @@ static void akb_draw_callback(Canvas* canvas, void* ctx) {
         (unsigned long)app->frames_received,
         (unsigned long)app->hid_applied);
     canvas_draw_str(canvas, 2, 54, counter);
+#ifdef AKB_SCREENSHOT
+    canvas_draw_str(
+        canvas,
+        2,
+        62,
+        app->backlight_forced ? "Up=light* Dn3=shot Back" : "Up=light Dn3=shot Back");
+#else
     canvas_draw_str(
         canvas,
         2,
         62,
         app->backlight_forced ? "Up=light* Back=exit" : "Up=light  Back=exit");
+#endif
     furi_mutex_release(app->mutex);
 }
 
@@ -165,12 +181,16 @@ static AndroidKeyboardBridge* akb_alloc(void) {
     app->hid_applied = 0;
     snprintf(app->status_line, sizeof(app->status_line), "Starting...");
 
+    akb_screenshot_init(app);
+
     return app;
 }
 
 static void akb_free(AndroidKeyboardBridge* app) {
     // Restore normal backlight timeout if we locked it on.
     akb_set_backlight_forced(app, false);
+
+    akb_screenshot_free(app);
 
     view_port_enabled_set(app->view_port, false);
     gui_remove_view_port(app->gui, app->view_port);
@@ -299,6 +319,8 @@ int32_t android_keyboard_bridge_app(void* p) {
             app->ble_need_buffer_notify = false;
             ble_profile_serial_notify_buffer_is_empty(app->profile);
         }
+
+        akb_screenshot_poll(app);
 
         if(app->exit_requested) {
             break;

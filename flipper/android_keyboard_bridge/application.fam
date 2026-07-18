@@ -1,13 +1,27 @@
+import os
+
+# Optional on-device screenshot (triple short Down).
+# Enable: AKB_SCREENSHOT=1 make flipper-build / flipper-launch
+_screenshot = os.environ.get("AKB_SCREENSHOT", "").strip().lower() in (
+    "1",
+    "y",
+    "yes",
+    "true",
+    "on",
+)
+
 App(
     appid="android_keyboard_bridge",
     name="Android KB Bridge",
     apptype=FlipperAppType.EXTERNAL,
     entry_point="android_keyboard_bridge_app",
-    stack_size=4 * 1024,
+    stack_size=(5 * 1024) if _screenshot else (4 * 1024),
+    cdefines=["AKB_SCREENSHOT"] if _screenshot else [],
     requires=[
         "bt",
         "gui",
         "notification",
+        "storage",
     ],
     order=90,
 )

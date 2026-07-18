@@ -163,6 +163,14 @@ cd /path/to/flipperzero-firmware
 
 Or: `make flipper-launch`.
 
+### Optional on-device Flipper screenshots
+
+```bash
+AKB_SCREENSHOT=1 make flipper-launch
+```
+
+Triple short **Down** saves a PBM under `apps_data/android_keyboard_bridge/` on the SD card. See `docs/FLIPPER.md`.
+
 ### Optional Rust FAP
 
 Same BLE protocol; denser comments for reading (`flipperzero-rs` 0.16 / API 87.1):

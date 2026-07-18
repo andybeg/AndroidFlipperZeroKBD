@@ -42,6 +42,18 @@ Settings — enabled layouts to cycle:
 
 ![Settings layouts](docs/screenshots/06-settings-layouts.png)
 
+### Flipper FAP (Android KB Bridge)
+
+Waiting for phone (USB connected). Bottom hint includes `Dn3=shot` when built with `AKB_SCREENSHOT=1`:
+
+![Flipper waiting](docs/screenshots/flipper-waiting.png)
+
+Phone connected over BLE — ready to type:
+
+![Flipper connected](docs/screenshots/flipper-connected.png)
+
+On-device capture: triple short **Down** → PBM on SD (`apps_data/android_keyboard_bridge/`). Details: `docs/FLIPPER.md`.
+
 More screenshots: `docs/screenshots/`.
 
 ## Components
@@ -50,9 +62,9 @@ More screenshots: `docs/screenshots/`.
 |------|-------------|
 | `docs/BUILD.md` | Build, flash, install, troubleshooting |
 | `docs/ANDROID.md` | Android app UI, Settings, multi-layout JSON keyboards |
-| `docs/FLIPPER.md` | FAP behavior, USB identity, BLE/RPC notes |
+| `docs/FLIPPER.md` | FAP behavior, USB identity, BLE/RPC, optional screenshots |
 | `docs/PROTOCOL.md` | BLE UUIDs and frame format |
-| `docs/screenshots/` | Android UI screenshots |
+| `docs/screenshots/` | Android + Flipper UI screenshots |
 | `flipper/android_keyboard_bridge/` | Flipper FAP sources (**C** — production / default) |
 | `flipper/android_keyboard_bridge_rust/` | Same FAP in **Rust**, for educational purposes only |
 | `android/` | Android app (`assets/layouts/`) |

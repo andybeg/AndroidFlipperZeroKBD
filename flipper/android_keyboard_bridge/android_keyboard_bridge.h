@@ -11,6 +11,9 @@
 
 #define AKB_TAG "AndroidKBBridge"
 
+/** Flipper LCD framebuffer size used by optional screenshot capture. */
+#define AKB_FB_SIZE 1024
+
 typedef struct {
     Bt* bt;
     FuriHalBleProfileBase* profile;
@@ -36,4 +39,12 @@ typedef struct {
     uint32_t frames_received;
     uint32_t hid_applied;
     char status_line[48];
+
+#ifdef AKB_SCREENSHOT
+    uint8_t fb_copy[AKB_FB_SIZE];
+    volatile bool fb_valid;
+    volatile bool screenshot_request;
+    uint8_t down_press_count;
+    uint32_t down_first_tick;
+#endif
 } AndroidKeyboardBridge;
