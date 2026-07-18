@@ -7,6 +7,10 @@ android/**/*.iml
 *.apk
 *.aab
 
+# Local release packaging / IDE helpers from ufbt
+dist/
+flipper/android_keyboard_bridge/.vscode/
+
 # Flipper build artifacts
 flipper/**/*.fap
 flipper/**/*.elf
