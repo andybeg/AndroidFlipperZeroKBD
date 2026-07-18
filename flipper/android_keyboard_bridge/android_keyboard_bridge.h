@@ -31,11 +31,14 @@ typedef struct {
 
     bool ble_active;
     bool ble_phone_connected;
-    bool ble_need_buffer_notify;
+    /** Set from BLE RX callback; cleared on main loop — must be volatile. */
+    volatile bool ble_need_buffer_notify;
     volatile bool exit_requested;
     volatile bool backlight_forced;
-    uint8_t reclaim_ticks;
-    bool usb_connected;
+    /** Set from BT status callback; decremented on main loop. */
+    volatile uint8_t reclaim_ticks;
+    /** Polled on main loop; read under mutex in draw callback. */
+    volatile bool usb_connected;
     uint32_t frames_received;
     uint32_t hid_applied;
     char status_line[48];

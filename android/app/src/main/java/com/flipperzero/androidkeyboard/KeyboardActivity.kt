@@ -71,6 +71,7 @@ class KeyboardActivity : AppCompatActivity(), BridgeSession.Listener {
 
         binding.keyboardView.keyListener = JsonKeyListener()
         binding.keyboardView.layoutSwipeListener = LayoutSwipeListener()
+        binding.touchpadView.inputSink = BridgeSession
         binding.touchpadView.listener = TouchpadListener()
 
         binding.btnBle.setOnClickListener { onBleButtonClicked() }

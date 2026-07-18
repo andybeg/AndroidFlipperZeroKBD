@@ -23,10 +23,6 @@ object BridgeProtocol {
     const val EVENT_MOUSE_UP: Byte = 0x12
     const val EVENT_MOUSE_SCROLL: Byte = 0x13
 
-    const val MOUSE_BTN_LEFT: Byte = 0x01
-    const val MOUSE_BTN_RIGHT: Byte = 0x02
-    const val MOUSE_BTN_MIDDLE: Byte = 0x04
-
     fun encodeKeyEvent(down: Boolean, keyCode: Byte, modifiers: Byte = 0): ByteArray {
         return byteArrayOf(
             MAGIC_0,

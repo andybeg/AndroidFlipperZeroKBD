@@ -1,5 +1,7 @@
 #include "android_keyboard_bridge.h"
 
+#include <string.h>
+
 #include <furi_hal_bt.h>
 #include <profiles/serial_profile.h>
 
@@ -151,6 +153,8 @@ static void akb_apply_hid_cmd(AndroidKeyboardBridge* app, const AkbHidCmd* cmd) 
 
 static AndroidKeyboardBridge* akb_alloc(void) {
     AndroidKeyboardBridge* app = malloc(sizeof(AndroidKeyboardBridge));
+    furi_check(app);
+    memset(app, 0, sizeof(AndroidKeyboardBridge));
 
     app->mutex = furi_mutex_alloc(FuriMutexTypeNormal);
     app->hid_queue = furi_message_queue_alloc(AKB_HID_QUEUE_SIZE, sizeof(AkbHidCmd));

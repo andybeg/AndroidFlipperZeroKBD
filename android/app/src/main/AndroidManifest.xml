@@ -8,8 +8,12 @@
         android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
 
+    <!-- BLE needed for Flipper path; Direct BT HID works without LE. -->
     <uses-feature
         android:name="android.hardware.bluetooth_le"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.bluetooth"
         android:required="true" />
 
     <application

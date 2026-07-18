@@ -9,8 +9,8 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.graphics.toColorInt
-import com.flipperzero.androidkeyboard.BridgeSession
-import com.flipperzero.androidkeyboard.ble.BridgeProtocol
+import com.flipperzero.androidkeyboard.InputSink
+import com.flipperzero.androidkeyboard.hid.MouseButtons
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -20,6 +20,8 @@ import kotlin.math.roundToInt
  * - 1 finger tap → left click
  * - 2 finger vertical drag → scroll
  * - 2 finger tap → right click
+ *
+ * Transport is injected via [inputSink] (same pattern as [com.flipperzero.androidkeyboard.keyboard.JsonKeyboardView] listeners).
  */
 class TouchpadView @JvmOverloads constructor(
     context: Context,
@@ -31,6 +33,7 @@ class TouchpadView @JvmOverloads constructor(
     }
 
     var listener: Listener? = null
+    var inputSink: InputSink? = null
 
     private val density = resources.displayMetrics.density
     private val moveScale = 1.35f
@@ -134,11 +137,7 @@ class TouchpadView @JvmOverloads constructor(
                     abs(event.x - downX) <= tapSlopPx &&
                     abs(event.y - downY) <= tapSlopPx
                 if (isTap) {
-                    val button = if (twoFinger) {
-                        BridgeProtocol.MOUSE_BTN_RIGHT
-                    } else {
-                        BridgeProtocol.MOUSE_BTN_LEFT
-                    }
+                    val button = if (twoFinger) MouseButtons.RIGHT else MouseButtons.LEFT
                     if (!sendClick(button)) return true
                 }
                 activePointerId = MotionEvent.INVALID_POINTER_ID
@@ -159,7 +158,8 @@ class TouchpadView @JvmOverloads constructor(
     }
 
     private fun sendMove(dx: Int, dy: Int): Boolean {
-        if (!BridgeSession.sendMouseMove(dx, dy)) {
+        val sink = inputSink
+        if (sink == null || !sink.sendMouseMove(dx, dy)) {
             listener?.onReadyRequired()
             return false
         }
@@ -167,7 +167,8 @@ class TouchpadView @JvmOverloads constructor(
     }
 
     private fun sendScroll(delta: Int): Boolean {
-        if (!BridgeSession.sendMouseScroll(delta)) {
+        val sink = inputSink
+        if (sink == null || !sink.sendMouseScroll(delta)) {
             listener?.onReadyRequired()
             return false
         }
@@ -175,11 +176,12 @@ class TouchpadView @JvmOverloads constructor(
     }
 
     private fun sendClick(button: Byte): Boolean {
-        if (!BridgeSession.sendMouseButton(true, button)) {
+        val sink = inputSink
+        if (sink == null || !sink.sendMouseButton(true, button)) {
             listener?.onReadyRequired()
             return false
         }
-        postDelayed({ BridgeSession.sendMouseButton(false, button) }, 40L)
+        postDelayed({ sink.sendMouseButton(false, button) }, 40L)
         return true
     }
 

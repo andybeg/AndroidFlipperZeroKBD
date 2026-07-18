@@ -3,15 +3,15 @@ package com.flipperzero.androidkeyboard
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import com.flipperzero.androidkeyboard.ble.BridgeProtocol
 import com.flipperzero.androidkeyboard.ble.FlipperBleClient
 import com.flipperzero.androidkeyboard.hid.DirectHidClient
+import com.flipperzero.androidkeyboard.hid.MouseButtons
 import com.flipperzero.androidkeyboard.prefs.AppPreferences
 
 /**
  * Routes keyboard/touchpad input to either Flipper BLE Serial or direct Bluetooth HID.
  */
-object BridgeSession {
+object BridgeSession : InputSink {
 
     enum class State {
         DISCONNECTED,
@@ -99,35 +99,36 @@ object BridgeSession {
         publish(State.DISCONNECTED, "Disconnected")
     }
 
-    fun sendTap(keyCode: Byte, modifiers: Byte = 0): Boolean {
+    override fun sendTap(keyCode: Byte, modifiers: Byte): Boolean {
         return when (prefs?.outputMode) {
             OutputMode.DIRECT_BT -> direct?.sendTap(keyCode, modifiers) == true
             else -> flipper?.sendTap(keyCode, modifiers) == true
         }
     }
 
-    fun sendMouseMove(dx: Int, dy: Int): Boolean {
+    override fun sendMouseMove(dx: Int, dy: Int): Boolean {
         return when (prefs?.outputMode) {
             OutputMode.DIRECT_BT -> direct?.sendMouseMove(dx, dy) == true
             else -> flipper?.sendMouseMove(dx, dy) == true
         }
     }
 
-    fun sendMouseButton(down: Boolean, button: Byte = BridgeProtocol.MOUSE_BTN_LEFT): Boolean {
+    override fun sendMouseButton(down: Boolean, button: Byte): Boolean {
+        val mask = if (button.toInt() == 0) MouseButtons.LEFT else button
         return when (prefs?.outputMode) {
-            OutputMode.DIRECT_BT -> direct?.sendMouseButton(down, button) == true
-            else -> flipper?.sendMouseButton(down, button) == true
+            OutputMode.DIRECT_BT -> direct?.sendMouseButton(down, mask) == true
+            else -> flipper?.sendMouseButton(down, mask) == true
         }
     }
 
-    fun sendMouseScroll(delta: Int): Boolean {
+    override fun sendMouseScroll(delta: Int): Boolean {
         return when (prefs?.outputMode) {
             OutputMode.DIRECT_BT -> direct?.sendMouseScroll(delta) == true
             else -> flipper?.sendMouseScroll(delta) == true
         }
     }
 
-    fun isReady(): Boolean = state == State.READY
+    override fun isReady(): Boolean = state == State.READY
 
     private fun disconnectOther(mode: OutputMode) {
         when (mode) {

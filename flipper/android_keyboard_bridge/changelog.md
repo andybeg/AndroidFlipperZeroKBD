@@ -1,3 +1,8 @@
+## v0.3
+
+- Catalog packaging polish: storage required only when screenshots are enabled
+- Safer startup zero-init and clearer shared-state visibility across BLE/UI threads
+
 ## v0.2
 
 - Mouse / touchpad events over the same BLE Serial protocol
