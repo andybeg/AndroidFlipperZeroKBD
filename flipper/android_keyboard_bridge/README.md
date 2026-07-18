@@ -1,0 +1,48 @@
+# Android KB Bridge (Flipper)
+
+Receive keyboard and mouse events from the companion Android app over **BLE Serial**, and inject them into a PC as **USB HID**.
+
+## What you need
+
+1. Flipper Zero with this FAP installed
+2. USB data cable Flipper ↔ PC
+3. Android phone with the companion app ([releases](https://github.com/andybeg/AndroidFlipperZeroKBD/releases))
+4. Phone paired with Flipper in system Bluetooth settings
+
+## How to use
+
+1. Plug Flipper into the PC (USB).
+2. Launch **Android KB Bridge** on Flipper.
+3. Wait until the screen shows `USB: connected`.
+4. On the phone: open the app → Settings → **Via Flipper** → select Flipper → Save.
+5. Tap **Connect** (top-left). Status on Flipper should become `Phone: connected`.
+6. Type on the phone keyboard or use Touchpad.
+
+### Buttons on Flipper
+
+| Button | Action |
+|--------|--------|
+| **Back** | Exit the app |
+| **Up** | Toggle forced backlight |
+| **Down ×3** | Save screenshot (only if built with `AKB_SCREENSHOT=1`) |
+
+## Notes
+
+- While this FAP owns USB HID, the Flipper serial port may disappear on the host — normal.
+- The host may see the device as Logitech-like (`0x046D` / `0xC529`), not as “Flipper”.
+- Full project docs (Android Direct Bluetooth mode, protocol, builds): [repository README](https://github.com/andybeg/AndroidFlipperZeroKBD).
+
+## Build
+
+From the project root (needs a local `flipperzero-firmware` checkout):
+
+```bash
+make flipper-link
+make flipper-launch
+```
+
+Or with [uFBT](https://pypi.org/project/ufbt/) from this directory:
+
+```bash
+ufbt launch
+```
