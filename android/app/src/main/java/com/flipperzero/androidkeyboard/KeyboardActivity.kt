@@ -32,7 +32,6 @@ class KeyboardActivity : AppCompatActivity(), BridgeSession.Listener {
     private lateinit var binding: ActivityKeyboardBinding
     private lateinit var prefs: AppPreferences
 
-    private var catalog: List<LayoutInfo> = emptyList()
     private var enabledLayouts: List<LayoutInfo> = emptyList()
     private var currentIndex: Int = 0
     private var inputMode: InputMode = InputMode.KEYBOARD
@@ -62,7 +61,6 @@ class KeyboardActivity : AppCompatActivity(), BridgeSession.Listener {
 
         prefs = AppPreferences(this)
         BridgeSession.init(this)
-        catalog = KeyboardLayoutLoader.loadCatalog(this)
 
         binding.bleDot.background = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
@@ -126,10 +124,13 @@ class KeyboardActivity : AppCompatActivity(), BridgeSession.Listener {
     }
 
     private fun reloadEnabledLayouts() {
-        val enabledIds = prefs.enabledLayoutIds(catalog)
-        enabledLayouts = enabledIds.mapNotNull { id -> catalog.firstOrNull { it.id == id } }
+        enabledLayouts = KeyboardLayoutLoader.buildEnabledLayouts(
+            this,
+            prefs.templateId,
+            prefs.enabledLanguageIds(),
+        )
         if (enabledLayouts.isEmpty()) {
-            enabledLayouts = catalog
+            return
         }
 
         val wantedId = prefs.currentLayoutId

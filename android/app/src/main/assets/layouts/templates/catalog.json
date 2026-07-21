@@ -1,0 +1,19 @@
+{
+  "templates": [
+    {
+      "id": "macos",
+      "title": "macOS",
+      "file": "layouts/templates/macos.json"
+    },
+    {
+      "id": "pc",
+      "title": "PC",
+      "file": "layouts/templates/pc.json"
+    },
+    {
+      "id": "number",
+      "title": "Number",
+      "file": "layouts/templates/number.json"
+    }
+  ]
+}

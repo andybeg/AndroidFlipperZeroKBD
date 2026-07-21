@@ -1,9 +1,36 @@
 package com.flipperzero.androidkeyboard.keyboard
 
-data class LayoutInfo(
+data class TemplateInfo(
     val id: String,
     val title: String,
     val file: String,
+)
+
+/** Where a language pack JSON is loaded from. */
+sealed class LanguageSource {
+    data class Asset(val path: String) : LanguageSource()
+    data class UserFile(val absolutePath: String) : LanguageSource()
+}
+
+data class LanguageInfo(
+    val id: String,
+    val title: String,
+    val locales: List<String>,
+    val source: LanguageSource,
+) {
+    val isUserPack: Boolean
+        get() = source is LanguageSource.UserFile
+}
+
+/**
+ * A selectable keyboard: one template filled with one language (or template-only for Number).
+ * [id] is `templateId` or `templateId:languageId`.
+ */
+data class LayoutInfo(
+    val id: String,
+    val title: String,
+    val templateId: String,
+    val languageId: String?,
 )
 
 data class KeyboardLayout(
@@ -28,3 +55,7 @@ data class KeyboardKey(
 
 const val ROLE_SPACE = "space"
 const val HID_SPACE: Byte = 0x2C
+
+fun composedLayoutId(templateId: String, languageId: String?): String {
+    return if (languageId.isNullOrBlank()) templateId else "$templateId:$languageId"
+}

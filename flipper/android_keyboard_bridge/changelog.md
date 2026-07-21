@@ -1,3 +1,7 @@
+## v0.5.3
+
+- Version align with companion app 0.5.3 (no FAP behavior change)
+
 ## v0.5.2
 
 - Recolor catalog/docs Flipper screenshots to qFlipper orange/black palette (254,138,44)

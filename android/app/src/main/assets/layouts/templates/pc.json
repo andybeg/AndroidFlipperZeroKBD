@@ -1,0 +1,294 @@
+{
+  "id": "pc",
+  "name": "PC",
+  "rows": [
+    [
+      {
+        "label": "1",
+        "hid": "0x1E"
+      },
+      {
+        "label": "2",
+        "hid": "0x1F"
+      },
+      {
+        "label": "3",
+        "hid": "0x20"
+      },
+      {
+        "label": "4",
+        "hid": "0x21"
+      },
+      {
+        "label": "5",
+        "hid": "0x22"
+      },
+      {
+        "label": "6",
+        "hid": "0x23"
+      },
+      {
+        "label": "7",
+        "hid": "0x24"
+      },
+      {
+        "label": "8",
+        "hid": "0x25"
+      },
+      {
+        "label": "9",
+        "hid": "0x26"
+      },
+      {
+        "label": "0",
+        "hid": "0x27"
+      },
+      {
+        "label": "-",
+        "hid": "0x2D"
+      },
+      {
+        "label": "=",
+        "hid": "0x2E"
+      }
+    ],
+    [
+      {
+        "label": "q",
+        "hid": "0x14",
+        "fill": "q"
+      },
+      {
+        "label": "w",
+        "hid": "0x1A",
+        "fill": "w"
+      },
+      {
+        "label": "e",
+        "hid": "0x08",
+        "fill": "e"
+      },
+      {
+        "label": "r",
+        "hid": "0x15",
+        "fill": "r"
+      },
+      {
+        "label": "t",
+        "hid": "0x17",
+        "fill": "t"
+      },
+      {
+        "label": "y",
+        "hid": "0x1C",
+        "fill": "y"
+      },
+      {
+        "label": "u",
+        "hid": "0x18",
+        "fill": "u"
+      },
+      {
+        "label": "i",
+        "hid": "0x0C",
+        "fill": "i"
+      },
+      {
+        "label": "o",
+        "hid": "0x12",
+        "fill": "o"
+      },
+      {
+        "label": "p",
+        "hid": "0x13",
+        "fill": "p"
+      },
+      {
+        "label": "[",
+        "hid": "0x2F",
+        "fill": "["
+      },
+      {
+        "label": "]",
+        "hid": "0x30",
+        "fill": "]"
+      }
+    ],
+    [
+      {
+        "label": "a",
+        "hid": "0x04",
+        "fill": "a"
+      },
+      {
+        "label": "s",
+        "hid": "0x16",
+        "fill": "s"
+      },
+      {
+        "label": "d",
+        "hid": "0x07",
+        "fill": "d"
+      },
+      {
+        "label": "f",
+        "hid": "0x09",
+        "fill": "f"
+      },
+      {
+        "label": "g",
+        "hid": "0x0A",
+        "fill": "g"
+      },
+      {
+        "label": "h",
+        "hid": "0x0B",
+        "fill": "h"
+      },
+      {
+        "label": "j",
+        "hid": "0x0D",
+        "fill": "j"
+      },
+      {
+        "label": "k",
+        "hid": "0x0E",
+        "fill": "k"
+      },
+      {
+        "label": "l",
+        "hid": "0x0F",
+        "fill": "l"
+      },
+      {
+        "label": ";",
+        "hid": "0x33",
+        "fill": ";"
+      },
+      {
+        "label": "'",
+        "hid": "0x34",
+        "fill": "'"
+      }
+    ],
+    [
+      {
+        "label": "Shift",
+        "hid": "0x00",
+        "mods": "0x02",
+        "span": 1.5,
+        "sticky_mod": true
+      },
+      {
+        "label": "z",
+        "hid": "0x1D",
+        "fill": "z"
+      },
+      {
+        "label": "x",
+        "hid": "0x1B",
+        "fill": "x"
+      },
+      {
+        "label": "c",
+        "hid": "0x06",
+        "fill": "c"
+      },
+      {
+        "label": "v",
+        "hid": "0x19",
+        "fill": "v"
+      },
+      {
+        "label": "b",
+        "hid": "0x05",
+        "fill": "b"
+      },
+      {
+        "label": "n",
+        "hid": "0x11",
+        "fill": "n"
+      },
+      {
+        "label": "m",
+        "hid": "0x10",
+        "fill": "m"
+      },
+      {
+        "label": ",",
+        "hid": "0x36",
+        "fill": ","
+      },
+      {
+        "label": ".",
+        "hid": "0x37",
+        "fill": "."
+      },
+      {
+        "label": "/",
+        "hid": "0x38",
+        "fill": "/"
+      },
+      {
+        "label": "Bksp",
+        "hid": "0x2A",
+        "span": 1.5
+      }
+    ],
+    [
+      {
+        "label": "Ctrl",
+        "hid": "0x00",
+        "mods": "0x01",
+        "sticky_mod": true
+      },
+      {
+        "label": "Win",
+        "hid": "0x00",
+        "mods": "0x08",
+        "sticky_mod": true
+      },
+      {
+        "label": "Alt",
+        "hid": "0x00",
+        "mods": "0x04",
+        "sticky_mod": true
+      },
+      {
+        "label": "Space",
+        "hid": "0x2C",
+        "span": 2,
+        "role": "space"
+      },
+      {
+        "label": "Menu",
+        "hid": "0x65"
+      },
+      {
+        "label": "←",
+        "hid": "0x50"
+      },
+      {
+        "label": "↑",
+        "hid": "0x52"
+      },
+      {
+        "label": "↓",
+        "hid": "0x51"
+      },
+      {
+        "label": "→",
+        "hid": "0x4F"
+      },
+      {
+        "label": "Tab",
+        "hid": "0x2B"
+      },
+      {
+        "label": "Enter",
+        "hid": "0x28",
+        "span": 1.5
+      }
+    ]
+  ]
+}

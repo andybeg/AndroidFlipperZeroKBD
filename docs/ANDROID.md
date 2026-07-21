@@ -11,8 +11,8 @@ Landscape fullscreen app that can send HID keyboard and mouse events either:
 KeyboardActivity (fullscreen landscape)
   ├─ BLE/BT button (top-left) → connect / disconnect
   ├─ Mode switch (top-center) → Keyboard | Touchpad
-  ├─ Settings → output mode + Flipper/PC device + layouts
-  ├─ JsonKeyboardView ← assets/layouts/*.json
+  ├─ Settings → output mode + Flipper/PC device + template/languages
+  ├─ JsonKeyboardView ← templates + language packs
   └─ TouchpadView → relative mouse move / click / scroll
          │
          ▼
@@ -90,56 +90,71 @@ If MAC is not set, Connect opens Settings.
 
 ## Keyboard layouts
 
-Layouts live as separate JSON files under `android/app/src/main/assets/layouts/`.
+Layouts are composed from:
 
-Catalog: `layouts/catalog.json`.
+| Folder | Role |
+|--------|------|
+| `assets/layouts/templates/` | Physical chrome + HID codes (`macos`, `pc`, `number`, …) |
+| `assets/layouts/languages/` | Label packs (`en`, `ru`, …) keyed by `fill` ids |
+
+Each template catalog entry points at a JSON file you can copy to add a new keyboard shape. Language packs declare `locales` (e.g. `["en"]`). Settings lists bundled packs (**en**, **ru**) plus any user JSON files; best-effort device detection only marks matches and seeds default checkboxes.
+
+### Custom language packs
+
+Drop a `*.json` file into the app’s languages folder (created on first Settings open):
+
+`Android/data/com.flipperzero.androidkeyboard/files/layouts/languages/`
+
+Via adb:
+
+```bash
+adb push de.json /sdcard/Android/data/com.flipperzero.androidkeyboard/files/layouts/languages/
+```
+
+- Files starting with `_` are ignored (a `README.txt` is written there with the schema).
+- Same `id` as a bundled pack overrides it.
+- Reopen Settings (or restart the app) after adding files. Custom packs show ✎ in the list.
 
 ### Important: labels only — no OS integration
 
-On-screen layouts (EN / RU / UA, macOS vs MX Mini, etc.) are **for typing convenience on the phone**. They only change key **labels** and which HID usages are sent for each button.
+On-screen languages are **for typing convenience on the phone**. They only change key **labels** (and optional language-only slots).
 
 They do **not** talk to the target Mac/PC:
 
-- Switching layout in this app does **not** change the host input language / keyboard source.
+- Switching language in this app does **not** change the host input language / keyboard source.
 - The PC still interprets physical HID key codes with **its own** active layout.
-- Example: the “macOS UA” screen shows `і` / `ї` / `є`, but the host prints those characters only if Ukrainian (or matching) input is selected on the Mac/PC. With a US layout active, the same keys produce Latin letters.
+- Example: Russian labels show `й` / `ц`, but the host prints those characters only if a Russian (or matching) input source is selected on the Mac/PC.
 
-RU/UA JSON files therefore reuse the same HID codes as EN (physical key positions). Pick the matching host input source yourself when you need those glyphs.
+Language packs therefore reuse the same HID codes as the English template positions. Pick the matching host input source yourself when you need those glyphs.
 
-### Bundled layouts
+### Bundled templates / languages
 
-| Id | Title |
-|----|-------|
-| `macos_en` | macOS EN |
-| `macos_ru` | macOS RU |
-| `macos_ua` | macOS UA |
-| `number` | Number |
-| `mx_mini_en` | Logitech MX Keys Mini EN |
-| `mx_mini_ru` | Logitech MX Keys Mini RU |
-| `mx_mini_ua` | Logitech MX Keys Mini UA |
+Templates: `macos`, `pc`, `number`  
+Language packs: `en`, `ru`
 
 ### Switching
 
-- **Settings** → check which layouts are enabled (order follows catalog / save order).
-- On the keyboard: **swipe left/right on the space bar** to cycle enabled layouts.
-  The active layout name appears as a centered banner and stays in the toolbar (`Layout: …`).
+- **Settings** → choose one **template**, then enable the **languages** you want.
+- On the keyboard: **swipe left/right on the space bar** to cycle enabled languages (same template).
 - A short tap on space still inserts a space.
 
-### Schema
+### Template key schema
 
 ```json
 {
-  "id": "macos_en",
-  "name": "macOS EN",
+  "id": "macos",
+  "name": "macOS",
   "rows": [
     [
       {
         "label": "q",
         "hid": "0x14",
+        "fill": "q",
         "mods": "0x00",
         "span": 1,
         "sticky_mod": false,
-        "role": null
+        "role": null,
+        "optional": false
       }
     ]
   ]
@@ -148,15 +163,27 @@ RU/UA JSON files therefore reuse the same HID codes as EN (physical key position
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `id` | yes (or catalog) | Stable layout id |
-| `name` | no | Shown in the toolbar |
+| `id` / `name` | template | Stable id and display title |
 | `rows` | yes | Array of rows; each row is an array of keys |
-| `label` | yes | Text drawn on the key |
+| `label` | yes | Default text (usually English) |
 | `hid` | yes | USB HID usage (hex string, e.g. `"0x04"` for `a`) |
+| `fill` | no | Slot id looked up in the language pack `labels` map |
+| `optional` | no | If `true` and the language pack has no `fill` label, the key is hidden |
 | `mods` | no | Modifier bitmask (hex). Default `0x00` |
 | `span` | no | Relative width (supports halves, e.g. `1.5`). Default `1` |
 | `sticky_mod` | no | If `true`, tap toggles sticky mods instead of sending a key |
 | `role` | no | `"space"` enables swipe-to-switch on that key |
+
+### Language pack schema
+
+```json
+{
+  "id": "ru",
+  "name": "Русский",
+  "locales": ["ru"],
+  "labels": { "q": "й", "w": "ц" }
+}
+```
 
 ### Sticky modifiers
 
@@ -204,25 +231,30 @@ SharedPreferences file `akb_prefs`:
 | `flipper_mac` | Flipper Bluetooth address |
 | `host_mac` | PC Bluetooth address (direct mode) |
 | `hid_device_name` | Bluetooth name shown to the PC (direct mode, default `Flipper KB Bridge`) |
-| `enabled_layouts` | Comma-separated layout ids |
-| `current_layout` | Last active layout id |
+| `template_id` | Selected keyboard template id |
+| `enabled_languages` | Comma-separated language pack ids |
+| `current_layout` | Last active composed id (`macos:ru` or `number`) |
+
+Legacy `enabled_layouts` values are migrated once to template + languages.
 
 ## Source map
 
 | Path | Role |
 |------|------|
 | `KeyboardActivity.kt` | Main UI, connection button, layout cycling, mode switch |
-| `SettingsActivity.kt` | Output mode + Flipper/PC device + layouts |
+| `SettingsActivity.kt` | Output mode + Flipper/PC device + template/languages |
 | `BridgeSession.kt` | Routes input to Flipper or Direct HID |
 | `hid/DirectHidClient.kt` | BluetoothHidDevice keyboard/mouse |
 | `hid/HidReportDescriptor.kt` | HID report descriptor |
-| `keyboard/KeyboardLayoutLoader.kt` | Catalog + JSON parse |
+| `keyboard/KeyboardLayoutLoader.kt` | Templates + language compose |
+| `keyboard/SystemLanguages.kt` | Match packs to phone locales |
 | `keyboard/JsonKeyboardView.kt` | Draw keys, sticky mods, space swipe |
 | `touchpad/TouchpadView.kt` | Relative mouse pad |
 | `ble/FlipperBleClient.kt` | GATT client + write queue (Flipper mode) |
 | `ble/BridgeProtocol.kt` | Flipper wire frame encode |
-| `prefs/AppPreferences.kt` | Mode + device + layout prefs |
-| `assets/layouts/` | Layout JSON files + catalog |
+| `prefs/AppPreferences.kt` | Mode + device + template/language prefs |
+| `assets/layouts/templates/` | Keyboard geometry templates |
+| `assets/layouts/languages/` | Language label packs |
 
 ## Build notes
 

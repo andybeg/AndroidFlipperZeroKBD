@@ -16,7 +16,10 @@ import com.flipperzero.androidkeyboard.ble.FlipperBleClient
 import com.flipperzero.androidkeyboard.databinding.ActivitySettingsBinding
 import com.flipperzero.androidkeyboard.hid.DirectHidClient
 import com.flipperzero.androidkeyboard.keyboard.KeyboardLayoutLoader
-import com.flipperzero.androidkeyboard.keyboard.LayoutInfo
+import com.flipperzero.androidkeyboard.keyboard.LanguageInfo
+import com.flipperzero.androidkeyboard.keyboard.SystemLanguages
+import com.flipperzero.androidkeyboard.keyboard.TemplateInfo
+import com.flipperzero.androidkeyboard.keyboard.composedLayoutId
 import com.flipperzero.androidkeyboard.prefs.AppPreferences
 
 class SettingsActivity : AppCompatActivity() {
@@ -24,9 +27,10 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsBinding
     private lateinit var prefs: AppPreferences
     private var devices: List<BluetoothDevice> = emptyList()
-    private var catalog: List<LayoutInfo> = emptyList()
+    private var templates: List<TemplateInfo> = emptyList()
+    private var systemLanguages: List<LanguageInfo> = emptyList()
     private var selectedDeviceIndex: Int = -1
-    private val layoutChecks = mutableListOf<Pair<LayoutInfo, CheckBox>>()
+    private val languageChecks = mutableListOf<Pair<LanguageInfo, CheckBox>>()
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
@@ -44,19 +48,25 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         prefs = AppPreferences(this)
-        catalog = KeyboardLayoutLoader.loadCatalog(this)
+        templates = KeyboardLayoutLoader.loadTemplates(this)
+        systemLanguages = KeyboardLayoutLoader.loadSystemLanguages(this)
         bindOutputMode()
         binding.editHidName.setText(prefs.hidDeviceName)
-        bindLayoutChecks()
+        bindTemplates()
+        bindLanguages()
         updateDeviceSectionLabels()
         updateCurrentTargetLabel()
         updateHidNameVisibility()
+        updateLanguageSectionForTemplate()
 
         binding.groupOutputMode.setOnCheckedChangeListener { _, _ ->
             updateDeviceSectionLabels()
             updateHidNameVisibility()
             refreshDevices()
             updateCurrentTargetLabel()
+        }
+        binding.groupTemplates.setOnCheckedChangeListener { _, _ ->
+            updateLanguageSectionForTemplate()
         }
         binding.btnRefresh.setOnClickListener { ensurePermissionsAndRefresh() }
         binding.btnSave.setOnClickListener { saveAll() }
@@ -85,6 +95,11 @@ class SettingsActivity : AppCompatActivity() {
         return if (binding.radioOutputDirect.isChecked) OutputMode.DIRECT_BT else OutputMode.FLIPPER
     }
 
+    private fun selectedTemplate(): TemplateInfo? {
+        val checkedId = binding.groupTemplates.checkedRadioButtonId
+        return templates.getOrNull(checkedId)
+    }
+
     private fun updateDeviceSectionLabels() {
         if (selectedOutputMode() == OutputMode.DIRECT_BT) {
             binding.txtDeviceSectionTitle.setText(R.string.settings_host_list)
@@ -95,19 +110,66 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    private fun bindLayoutChecks() {
-        binding.listLayouts.removeAllViews()
-        layoutChecks.clear()
-        val enabled = prefs.enabledLayoutIds(catalog).toSet()
-        catalog.forEach { info ->
-            val box = CheckBox(this).apply {
+    private fun bindTemplates() {
+        binding.groupTemplates.removeAllViews()
+        val current = prefs.templateId
+        templates.forEachIndexed { index, info ->
+            val button = RadioButton(this).apply {
+                id = index
                 text = info.title
+                textSize = 15f
+            }
+            binding.groupTemplates.addView(button)
+            if (info.id == current) {
+                button.isChecked = true
+            }
+        }
+        if (binding.groupTemplates.checkedRadioButtonId < 0 && templates.isNotEmpty()) {
+            binding.groupTemplates.check(0)
+        }
+    }
+
+    private fun bindLanguages() {
+        binding.listLanguages.removeAllViews()
+        languageChecks.clear()
+        if (systemLanguages.isEmpty()) {
+            Toast.makeText(this, R.string.settings_languages_none, Toast.LENGTH_LONG).show()
+            return
+        }
+        val matchedIds = KeyboardLayoutLoader.loadMatchedLanguages(this).map { it.id }.toSet()
+        val detected = SystemLanguages.systemLocaleTags(this).sorted().joinToString(", ")
+        val userDir = KeyboardLayoutLoader.userLanguagesDir(this).absolutePath
+        binding.txtLanguagesHint.text = buildString {
+            append(getString(R.string.settings_languages_hint))
+            append('\n')
+            append(getString(R.string.settings_languages_custom_dir, userDir))
+            append('\n')
+            append(getString(R.string.settings_languages_detected, detected.ifBlank { "—" }))
+        }
+        val enabled = prefs.enabledLanguageIds().toSet()
+        systemLanguages.forEach { info ->
+            val box = CheckBox(this).apply {
+                text = buildString {
+                    append(info.title)
+                    if (info.isUserPack) append(" ✎")
+                    if (info.id in matchedIds) append(" ✓")
+                }
                 isChecked = info.id in enabled
                 textSize = 16f
             }
-            binding.listLayouts.addView(box)
-            layoutChecks += info to box
+            binding.listLanguages.addView(box)
+            languageChecks += info to box
         }
+    }
+
+    private fun updateLanguageSectionForTemplate() {
+        val template = selectedTemplate() ?: return
+        val usesLang = KeyboardLayoutLoader.templateUsesLanguages(this, template)
+        binding.listLanguages.visibility = if (usesLang) View.VISIBLE else View.GONE
+        binding.txtLanguagesHint.setText(
+            if (usesLang) R.string.settings_languages_hint else R.string.settings_languages_not_used,
+        )
+        languageChecks.forEach { (_, box) -> box.isEnabled = usesLang }
     }
 
     private fun ensurePermissionsAndRefresh() {
@@ -172,15 +234,24 @@ class SettingsActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun saveAll() {
-        val enabledIds = layoutChecks
-            .filter { (_, box) -> box.isChecked }
-            .map { (info, _) -> info.id }
-
-        if (enabledIds.isEmpty()) {
-            Toast.makeText(this, R.string.settings_layouts_required, Toast.LENGTH_SHORT).show()
+        val template = selectedTemplate()
+        if (template == null) {
+            Toast.makeText(this, R.string.settings_select_device, Toast.LENGTH_SHORT).show()
             return
         }
-        prefs.setEnabledLayoutIds(enabledIds)
+        prefs.templateId = template.id
+
+        val usesLang = KeyboardLayoutLoader.templateUsesLanguages(this, template)
+        val enabledLangIds = if (usesLang) {
+            languageChecks.filter { (_, box) -> box.isChecked }.map { (info, _) -> info.id }
+        } else {
+            emptyList()
+        }
+        if (usesLang && enabledLangIds.isEmpty()) {
+            Toast.makeText(this, R.string.settings_languages_required, Toast.LENGTH_SHORT).show()
+            return
+        }
+        prefs.setEnabledLanguageIds(enabledLangIds)
 
         val mode = selectedOutputMode()
         prefs.outputMode = mode
@@ -201,10 +272,12 @@ class SettingsActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.settings_select_device, Toast.LENGTH_SHORT).show()
             return
         }
-        // Direct BT: host optional — Connect will wait for pairing if unset.
 
-        if (prefs.currentLayoutId !in enabledIds) {
-            prefs.currentLayoutId = enabledIds.first()
+        val layouts = KeyboardLayoutLoader.buildEnabledLayouts(this, template.id, enabledLangIds)
+        val current = prefs.currentLayoutId
+        if (current == null || layouts.none { it.id == current }) {
+            prefs.currentLayoutId = layouts.firstOrNull()?.id
+                ?: composedLayoutId(template.id, enabledLangIds.firstOrNull())
         }
 
         Toast.makeText(this, R.string.settings_saved, Toast.LENGTH_SHORT).show()

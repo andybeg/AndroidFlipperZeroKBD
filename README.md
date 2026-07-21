@@ -38,9 +38,9 @@ Settings — Direct Bluetooth host list:
 
 ![Settings Direct BT host](docs/screenshots/08-settings-direct-bt.png)
 
-Settings — enabled layouts to cycle:
+Settings — keyboard template (macOS / PC / Number) and languages:
 
-![Settings layouts](docs/screenshots/06-settings-layouts.png)
+![Settings templates and languages](docs/screenshots/06-settings-layouts.png)
 
 ### Flipper FAP (Android KB Bridge)
 
@@ -61,13 +61,13 @@ More screenshots: `docs/screenshots/`.
 | Path | Description |
 |------|-------------|
 | `docs/BUILD.md` | Build, flash, install, troubleshooting |
-| `docs/ANDROID.md` | Android app UI, Settings, multi-layout JSON keyboards |
+| `docs/ANDROID.md` | Android app UI, Settings, templates + language packs |
 | `docs/FLIPPER.md` | FAP behavior, USB identity, BLE/RPC, optional screenshots |
 | `docs/PROTOCOL.md` | BLE UUIDs and frame format |
 | `docs/screenshots/` | Android + Flipper UI screenshots |
 | `flipper/android_keyboard_bridge/` | Flipper FAP sources (**C** — production / default) |
 | `flipper/android_keyboard_bridge_rust/` | Same FAP in **Rust**, for educational purposes only |
-| `android/` | Android app (`assets/layouts/`) |
+| `android/` | Android app (`assets/layouts/templates/`, `assets/layouts/languages/`) |
 
 ## Requirements
 
@@ -91,15 +91,15 @@ make apk-install
 
 Then on the phone:
 
-1. **Settings** → choose **Via Flipper** or **Direct Bluetooth to PC** (Flipper MAC required; PC optional for Direct), enable layouts → Save  
+1. **Settings** → choose **Via Flipper** or **Direct Bluetooth to PC**, pick a **template** (macOS / PC / Number) and enable **languages** (EN/RU bundled) → Save  
 2. Tap the **top-left** connection button (green = ready; blue = waiting for PC to pair in Direct mode)  
 3. For Direct BT without a saved PC: accept discoverable, then pair/connect from the PC — host MAC is saved automatically  
 4. Type on the keyboard, or use the top-center **Keyboard | Touchpad** switch  
-5. Swipe on the **space bar** to switch layouts (banner + toolbar show the active name)  
+5. Swipe on the **space bar** to switch languages (banner + toolbar show the active name)  
 
 Details: `docs/ANDROID.md`, `docs/FLIPPER.md`.
 
-Bundled layouts: macOS EN/RU/UA, Number, Logitech MX Keys Mini EN/RU/UA.
+Bundled templates: **macOS**, **PC**, **Number**. Language packs: **EN**, **RU**. Drop extra language JSON into the app’s `files/layouts/languages/` folder (see Settings hint / `docs/ANDROID.md`).
 
 Layout screens are for convenience only — they do not switch the Mac/PC input language; match the host keyboard source yourself (see `docs/ANDROID.md`).
 

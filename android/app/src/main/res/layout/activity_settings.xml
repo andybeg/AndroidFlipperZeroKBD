@@ -128,18 +128,40 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="@string/settings_layouts_title"
+            android:text="@string/settings_template_title"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="@string/settings_layouts_hint"
+            android:text="@string/settings_template_hint"
+            android:textSize="13sp" />
+
+        <RadioGroup
+            android:id="@+id/groupTemplates"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/settings_languages_title"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txtLanguagesHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/settings_languages_hint"
             android:textSize="13sp" />
 
         <LinearLayout
-            android:id="@+id/listLayouts"
+            android:id="@+id/listLanguages"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"

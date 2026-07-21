@@ -1,0 +1,20 @@
+{
+  "languages": [
+    {
+      "id": "en",
+      "title": "English",
+      "locales": [
+        "en"
+      ],
+      "file": "layouts/languages/en.json"
+    },
+    {
+      "id": "ru",
+      "title": "\u0420\u0443\u0441\u0441\u043a\u0438\u0439",
+      "locales": [
+        "ru"
+      ],
+      "file": "layouts/languages/ru.json"
+    }
+  ]
+}
