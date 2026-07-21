@@ -37,6 +37,8 @@
     <string name="settings_languages_none">No language packs found in the app</string>
     <string name="settings_languages_not_used">This template has no language keys (digits / chrome only).</string>
     <string name="settings_languages_required">Enable at least one language</string>
+    <string name="settings_dual_labels">Show two languages on keys</string>
+    <string name="settings_dual_labels_hint">Current language large, next enabled language small. Needs at least two languages.</string>
     <string name="layout_only_one">Only one language enabled</string>
     <string name="layout_active">Layout: %1$s</string>
     <string name="mode_keyboard">Keyboard</string>

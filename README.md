@@ -14,17 +14,17 @@ I often work with devices that ship without a keyboard and needed something univ
 
 ### Android app
 
-Keyboard (macOS EN), disconnected:
+Keyboard (PC · English), dual labels:
 
-![Keyboard macOS EN](docs/screenshots/01-keyboard-en.png)
+![Keyboard PC EN dual](docs/screenshots/01-keyboard-en.png)
 
 Layout switch banner after swiping the space bar:
 
 ![Layout switch banner](docs/screenshots/02-layout-switch-banner.png)
 
-Connected (macOS RU):
+Keyboard (macOS · Русский), dual labels:
 
-![Keyboard connected](docs/screenshots/03-keyboard-connected.png)
+![Keyboard macOS RU dual](docs/screenshots/03-keyboard-connected.png)
 
 Touchpad mode:
 
@@ -41,6 +41,10 @@ Settings — Direct Bluetooth host list:
 Settings — keyboard template (macOS / PC / Number) and languages:
 
 ![Settings templates and languages](docs/screenshots/06-settings-layouts.png)
+
+Settings — dual-language key labels toggle:
+
+![Settings dual labels](docs/screenshots/07-settings-dual-labels.png)
 
 ### Flipper FAP (Android KB Bridge)
 
@@ -91,7 +95,7 @@ make apk-install
 
 Then on the phone:
 
-1. **Settings** → choose **Via Flipper** or **Direct Bluetooth to PC**, pick a **template** (macOS / PC / Number) and enable **languages** (EN/RU bundled) → Save  
+1. **Settings** → choose **Via Flipper** or **Direct Bluetooth to PC**, pick a **template** (macOS / PC / Number), enable **languages** (EN/RU), optionally **Show two languages on keys** → Save  
 2. Tap the **top-left** connection button (green = ready; blue = waiting for PC to pair in Direct mode)  
 3. For Direct BT without a saved PC: accept discoverable, then pair/connect from the PC — host MAC is saved automatically  
 4. Type on the keyboard, or use the top-center **Keyboard | Touchpad** switch  
@@ -99,7 +103,7 @@ Then on the phone:
 
 Details: `docs/ANDROID.md`, `docs/FLIPPER.md`.
 
-Bundled templates: **macOS**, **PC**, **Number**. Language packs: **EN**, **RU**. Drop extra language JSON into the app’s `files/layouts/languages/` folder (see Settings hint / `docs/ANDROID.md`).
+Bundled templates: **macOS**, **PC**, **Number**. Language packs: **EN**, **RU**. Optional dual-label keys (current large, next small). Drop extra language JSON into the app’s `files/layouts/languages/` folder (see Settings hint / `docs/ANDROID.md`).
 
 Layout screens are for convenience only — they do not switch the Mac/PC input language; match the host keyboard source yourself (see `docs/ANDROID.md`).
 

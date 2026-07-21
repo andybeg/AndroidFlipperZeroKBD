@@ -167,6 +167,22 @@
             android:layout_marginTop="8dp"
             android:orientation="vertical" />
 
+        <CheckBox
+            android:id="@+id/checkDualLabels"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/settings_dual_labels"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/txtDualLabelsHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="@string/settings_dual_labels_hint"
+            android:textSize="13sp" />
+
         <Button
             android:id="@+id/btnSave"
             android:layout_width="match_parent"

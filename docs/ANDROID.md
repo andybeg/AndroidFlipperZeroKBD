@@ -136,6 +136,7 @@ Language packs: `en`, `ru`
 
 - **Settings** → choose one **template**, then enable the **languages** you want.
 - On the keyboard: **swipe left/right on the space bar** to cycle enabled languages (same template).
+- Optional Settings checkbox **Show two languages on keys**: current language large, next enabled language small on letter keys.
 - A short tap on space still inserts a space.
 
 ### Template key schema

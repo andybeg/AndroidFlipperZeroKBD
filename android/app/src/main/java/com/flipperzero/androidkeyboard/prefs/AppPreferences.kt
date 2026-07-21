@@ -88,6 +88,13 @@ class AppPreferences(context: Context) {
         prefs.edit().putString(KEY_ENABLED_LANGUAGES, ids.joinToString(",")).apply()
     }
 
+    /** Show current language large and the next enabled language small on letter keys. */
+    var showDualLanguageLabels: Boolean
+        get() = prefs.getBoolean(KEY_DUAL_LABELS, false)
+        set(value) {
+            prefs.edit().putBoolean(KEY_DUAL_LABELS, value).apply()
+        }
+
     private fun migrateLegacyLayoutsIfNeeded() {
         if (prefs.contains(KEY_TEMPLATE_ID) || prefs.contains(KEY_ENABLED_LANGUAGES)) {
             return
@@ -151,6 +158,7 @@ class AppPreferences(context: Context) {
         private const val KEY_ENABLED_LANGUAGES = "enabled_languages"
         private const val KEY_TEMPLATE_ID = "template_id"
         private const val KEY_CURRENT_LAYOUT = "current_layout"
+        private const val KEY_DUAL_LABELS = "dual_language_labels"
 
         /** Old template ids → current bundled ids. */
         private fun normalizeTemplateId(id: String): String = when (id) {

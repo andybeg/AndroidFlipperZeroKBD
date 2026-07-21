@@ -112,15 +112,30 @@ object KeyboardLayoutLoader {
         }
     }
 
-    fun loadLayout(context: Context, info: LayoutInfo): KeyboardLayout {
+    fun loadLayout(
+        context: Context,
+        info: LayoutInfo,
+        secondaryLanguageId: String? = null,
+    ): KeyboardLayout {
         val template = loadTemplates(context).first { it.id == info.templateId }
+        val catalog = loadLanguageCatalog(context)
         val labels = if (info.languageId != null) {
-            val lang = loadLanguageCatalog(context).first { it.id == info.languageId }
+            val lang = catalog.first { it.id == info.languageId }
             loadLanguageLabels(context, lang)
         } else {
             emptyMap()
         }
-        return compose(readAsset(context, template.file), labels, info)
+        val altLabels = if (
+            secondaryLanguageId != null &&
+            secondaryLanguageId != info.languageId
+        ) {
+            catalog.firstOrNull { it.id == secondaryLanguageId }
+                ?.let { loadLanguageLabels(context, it) }
+                .orEmpty()
+        } else {
+            emptyMap()
+        }
+        return compose(readAsset(context, template.file), labels, altLabels, info)
     }
 
     fun loadLayoutById(context: Context, id: String): KeyboardLayout? {
@@ -243,6 +258,7 @@ object KeyboardLayoutLoader {
     private fun compose(
         templateJson: String,
         labels: Map<String, String>,
+        altLabels: Map<String, String>,
         info: LayoutInfo,
     ): KeyboardLayout {
         val root = JSONObject(templateJson)
@@ -253,12 +269,16 @@ object KeyboardLayoutLoader {
         val rowsJson = root.getJSONArray("rows")
         val rows = mutableListOf<List<KeyboardKey>>()
         for (r in 0 until rowsJson.length()) {
-            rows += composeRow(rowsJson.getJSONArray(r), labels)
+            rows += composeRow(rowsJson.getJSONArray(r), labels, altLabels)
         }
         return KeyboardLayout(id = info.id, name = name, rows = rows)
     }
 
-    private fun composeRow(rowJson: JSONArray, labels: Map<String, String>): List<KeyboardKey> {
+    private fun composeRow(
+        rowJson: JSONArray,
+        labels: Map<String, String>,
+        altLabels: Map<String, String>,
+    ): List<KeyboardKey> {
         val keys = mutableListOf<KeyboardKey>()
         for (i in 0 until rowJson.length()) {
             val obj = rowJson.getJSONObject(i)
@@ -269,6 +289,11 @@ object KeyboardLayoutLoader {
                 fill != null && optional -> continue // hide optional slot without language label
                 else -> obj.getString("label")
             }
+            val altLabel = if (fill != null && altLabels.isNotEmpty()) {
+                altLabels[fill]?.takeIf { it.isNotBlank() && !it.equals(label, ignoreCase = false) }
+            } else {
+                null
+            }
             val role = obj.optString("role", "").takeIf { it.isNotBlank() }
             keys += KeyboardKey(
                 label = label,
@@ -277,6 +302,7 @@ object KeyboardLayoutLoader {
                 span = obj.optDouble("span", 1.0).toFloat().coerceAtLeast(0.5f),
                 stickyMod = obj.optBoolean("sticky_mod", false),
                 role = role,
+                altLabel = altLabel,
             )
         }
         return keys

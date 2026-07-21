@@ -48,6 +48,8 @@ data class KeyboardKey(
     val stickyMod: Boolean = false,
     /** Special role, e.g. "space" enables swipe-to-switch layouts. */
     val role: String? = null,
+    /** Secondary language glyph (dual-label mode); drawn smaller under [label]. */
+    val altLabel: String? = null,
 ) {
     val isSpace: Boolean
         get() = role == ROLE_SPACE || hid == HID_SPACE

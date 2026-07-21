@@ -4,6 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
@@ -59,14 +63,21 @@ class JsonKeyboardView @JvmOverloads constructor(
             var column = 0
             row.forEach { key ->
                 val units = (key.span * 2).toInt().coerceAtLeast(1)
+                val dual = !key.altLabel.isNullOrBlank()
                 val button = TextView(context).apply {
-                    text = key.label
+                    text = formatKeyText(key)
                     gravity = Gravity.CENTER
                     setTextColor(Color.WHITE)
                     setBackgroundColor(keyBackground(key, false))
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, if (key.label.length > 2) 14f else 18f)
+                    val primarySp = when {
+                        dual -> 16f
+                        key.label.length > 2 -> 14f
+                        else -> 18f
+                    }
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, primarySp)
                     typeface = Typeface.DEFAULT_BOLD
-                    setPadding(0, (12 * density).toInt(), 0, (12 * density).toInt())
+                    val padV = ((if (dual) 8 else 12) * density).toInt()
+                    setPadding(0, padV, 0, padV)
                     attachKeyInteraction(key, this)
                 }
 
@@ -84,6 +95,26 @@ class JsonKeyboardView @JvmOverloads constructor(
             addView(grid)
         }
         refreshStickyVisuals()
+    }
+
+    private fun formatKeyText(key: KeyboardKey): CharSequence {
+        val alt = key.altLabel?.takeIf { it.isNotBlank() } ?: return key.label
+        val text = "${key.label}\n$alt"
+        val spanned = SpannableString(text)
+        val start = key.label.length + 1
+        spanned.setSpan(
+            RelativeSizeSpan(0.58f),
+            start,
+            text.length,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        spanned.setSpan(
+            ForegroundColorSpan(ALT_LABEL),
+            start,
+            text.length,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        return spanned
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -157,6 +188,10 @@ class JsonKeyboardView @JvmOverloads constructor(
         private val KEY_NORMAL = "#2A2A2A".toColorInt()
         private val KEY_SPECIAL = "#3A3A3A".toColorInt()
         private val ACCENT = "#2E7D32".toColorInt()
-        private val SPECIAL_LABELS = setOf("⇥", "⌫", "␣", "↵", "⇧", "⌃", "⌥", "⌘", "esc", "☰")
+        private val ALT_LABEL = "#9E9E9E".toColorInt()
+        private val SPECIAL_LABELS = setOf(
+            "⇥", "⌫", "␣", "↵", "⇧", "⌃", "⌥", "⌘", "esc", "☰",
+            "Tab", "Bksp", "Space", "Enter", "Shift", "Ctrl", "Win", "Alt", "Menu",
+        )
     }
 }

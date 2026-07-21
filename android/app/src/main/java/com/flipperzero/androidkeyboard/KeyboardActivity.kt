@@ -142,13 +142,25 @@ class KeyboardActivity : AppCompatActivity(), BridgeSession.Listener {
         if (enabledLayouts.isEmpty()) return
         currentIndex = currentIndex.coerceIn(0, enabledLayouts.lastIndex)
         val info = enabledLayouts[currentIndex]
-        val layout: KeyboardLayout = KeyboardLayoutLoader.loadLayout(this, info)
+        val layout: KeyboardLayout = KeyboardLayoutLoader.loadLayout(
+            this,
+            info,
+            secondaryLanguageId = secondaryLanguageIdForDual(info),
+        )
         binding.keyboardView.bindLayout(layout)
         binding.txtLayoutName.text = getString(R.string.layout_active, layout.name)
         prefs.currentLayoutId = layout.id
         if (announce) {
             showLayoutBanner(layout.name)
         }
+    }
+
+    private fun secondaryLanguageIdForDual(current: LayoutInfo): String? {
+        if (!prefs.showDualLanguageLabels) return null
+        if (current.languageId == null) return null
+        if (enabledLayouts.size < 2) return null
+        val next = enabledLayouts[(currentIndex + 1) % enabledLayouts.size]
+        return next.languageId?.takeIf { it != current.languageId }
     }
 
     private fun cycleLayout(direction: Int) {

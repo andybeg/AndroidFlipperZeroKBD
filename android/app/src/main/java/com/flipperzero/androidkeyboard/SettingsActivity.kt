@@ -54,6 +54,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.editHidName.setText(prefs.hidDeviceName)
         bindTemplates()
         bindLanguages()
+        binding.checkDualLabels.isChecked = prefs.showDualLanguageLabels
         updateDeviceSectionLabels()
         updateCurrentTargetLabel()
         updateHidNameVisibility()
@@ -166,10 +167,13 @@ class SettingsActivity : AppCompatActivity() {
         val template = selectedTemplate() ?: return
         val usesLang = KeyboardLayoutLoader.templateUsesLanguages(this, template)
         binding.listLanguages.visibility = if (usesLang) View.VISIBLE else View.GONE
-        binding.txtLanguagesHint.setText(
-            if (usesLang) R.string.settings_languages_hint else R.string.settings_languages_not_used,
-        )
+        binding.checkDualLabels.visibility = if (usesLang) View.VISIBLE else View.GONE
+        binding.txtDualLabelsHint.visibility = if (usesLang) View.VISIBLE else View.GONE
+        if (!usesLang) {
+            binding.txtLanguagesHint.setText(R.string.settings_languages_not_used)
+        }
         languageChecks.forEach { (_, box) -> box.isEnabled = usesLang }
+        binding.checkDualLabels.isEnabled = usesLang
     }
 
     private fun ensurePermissionsAndRefresh() {
@@ -252,6 +256,7 @@ class SettingsActivity : AppCompatActivity() {
             return
         }
         prefs.setEnabledLanguageIds(enabledLangIds)
+        prefs.showDualLanguageLabels = usesLang && binding.checkDualLabels.isChecked
 
         val mode = selectedOutputMode()
         prefs.outputMode = mode
