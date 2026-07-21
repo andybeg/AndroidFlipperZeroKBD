@@ -1,3 +1,7 @@
+## v0.5.2
+
+- Recolor catalog/docs Flipper screenshots to qFlipper orange/black palette (254,138,44)
+
 ## v0.5
 
 - Exit is Back-only again (USB unplug no longer leaves the app)
