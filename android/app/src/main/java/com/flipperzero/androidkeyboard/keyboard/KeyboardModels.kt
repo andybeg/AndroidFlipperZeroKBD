@@ -36,8 +36,29 @@ data class LayoutInfo(
 data class KeyboardLayout(
     val id: String,
     val name: String,
-    val rows: List<List<KeyboardKey>>,
+    val rows: List<List<KeyboardCell>>,
 )
+
+/** One grid slot: a single key or a stacked cluster sharing one [span]. */
+sealed class KeyboardCell {
+    abstract val span: Float
+
+    data class Single(val key: KeyboardKey) : KeyboardCell() {
+        override val span: Float
+            get() = key.span
+    }
+
+    data class Stack(
+        val axis: StackAxis,
+        override val span: Float,
+        val keys: List<KeyboardKey>,
+    ) : KeyboardCell()
+}
+
+enum class StackAxis {
+    VERTICAL,
+    HORIZONTAL,
+}
 
 data class KeyboardKey(
     val label: String,

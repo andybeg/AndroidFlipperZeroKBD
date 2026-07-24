@@ -165,15 +165,35 @@ Language packs: `en`, `ru`
 | Field | Required | Description |
 |-------|----------|-------------|
 | `id` / `name` | template | Stable id and display title |
-| `rows` | yes | Array of rows; each row is an array of keys |
-| `label` | yes | Default text (usually English) |
-| `hid` | yes | USB HID usage (hex string, e.g. `"0x04"` for `a`) |
+| `rows` | yes | Array of rows; each row is an array of **cells** (key or stack) |
+| `label` | yes (key) | Default text (usually English) |
+| `hid` | yes (key) | USB HID usage (hex string, e.g. `"0x04"` for `a`) |
 | `fill` | no | Slot id looked up in the language pack `labels` map |
 | `optional` | no | If `true` and the language pack has no `fill` label, the key is hidden |
 | `mods` | no | Modifier bitmask (hex). Default `0x00` |
 | `span` | no | Relative width (supports halves, e.g. `1.5`). Default `1` |
 | `sticky_mod` | no | If `true`, tap toggles sticky mods instead of sending a key |
 | `role` | no | `"space"` enables swipe-to-switch on that key |
+| `stack` | no | `"v"` / `"h"` — cluster of keys sharing one cell (see below) |
+| `keys` | with `stack` | Array of key objects inside the cluster |
+
+### Stacked keys (e.g. ↑↓ in one slot)
+
+Prefer an explicit object (clearer than a bare nested array):
+
+```json
+{
+  "stack": "v",
+  "span": 1,
+  "keys": [
+    { "label": "↑", "hid": "0x52" },
+    { "label": "↓", "hid": "0x51" }
+  ]
+}
+```
+
+- `"stack": "v"` — top→bottom (arrows). `"h"` — left→right (future: e.g. `[` / `]`).
+- A bare JSON array of keys in a row is also accepted and treated as a vertical stack.
 
 ### Language pack schema
 

@@ -63,8 +63,19 @@ object KeyboardLayoutLoader {
         for (r in 0 until rows.length()) {
             val row = rows.getJSONArray(r)
             for (c in 0 until row.length()) {
-                if (row.getJSONObject(c).optString("fill").isNotBlank()) {
-                    return true
+                when (val item = row.get(c)) {
+                    is JSONObject -> {
+                        if (item.optString("fill").isNotBlank()) return true
+                        val nested = item.optJSONArray("keys") ?: continue
+                        for (k in 0 until nested.length()) {
+                            if (nested.getJSONObject(k).optString("fill").isNotBlank()) return true
+                        }
+                    }
+                    is JSONArray -> {
+                        for (k in 0 until item.length()) {
+                            if (item.getJSONObject(k).optString("fill").isNotBlank()) return true
+                        }
+                    }
                 }
             }
         }
@@ -267,7 +278,7 @@ object KeyboardLayoutLoader {
             else -> info.title
         }
         val rowsJson = root.getJSONArray("rows")
-        val rows = mutableListOf<List<KeyboardKey>>()
+        val rows = mutableListOf<List<KeyboardCell>>()
         for (r in 0 until rowsJson.length()) {
             rows += composeRow(rowsJson.getJSONArray(r), labels, altLabels)
         }
@@ -278,34 +289,85 @@ object KeyboardLayoutLoader {
         rowJson: JSONArray,
         labels: Map<String, String>,
         altLabels: Map<String, String>,
+    ): List<KeyboardCell> {
+        val cells = mutableListOf<KeyboardCell>()
+        for (i in 0 until rowJson.length()) {
+            when (val item = rowJson.get(i)) {
+                is JSONArray -> {
+                    val keys = composeKeyList(item, labels, altLabels)
+                    if (keys.isNotEmpty()) {
+                        cells += KeyboardCell.Stack(
+                            axis = StackAxis.VERTICAL,
+                            span = 1f,
+                            keys = keys,
+                        )
+                    }
+                }
+                is JSONObject -> {
+                    if (item.has("keys") || item.has("stack")) {
+                        val nested = item.getJSONArray("keys")
+                        val keys = composeKeyList(nested, labels, altLabels)
+                        if (keys.isEmpty()) continue
+                        val axis = parseStackAxis(item.optString("stack", "v"))
+                        val span = item.optDouble("span", 1.0).toFloat().coerceAtLeast(0.5f)
+                        cells += KeyboardCell.Stack(axis = axis, span = span, keys = keys)
+                    } else {
+                        val key = composeKey(item, labels, altLabels) ?: continue
+                        cells += KeyboardCell.Single(key)
+                    }
+                }
+            }
+        }
+        return cells
+    }
+
+    private fun composeKeyList(
+        arr: JSONArray,
+        labels: Map<String, String>,
+        altLabels: Map<String, String>,
     ): List<KeyboardKey> {
         val keys = mutableListOf<KeyboardKey>()
-        for (i in 0 until rowJson.length()) {
-            val obj = rowJson.getJSONObject(i)
-            val fill = obj.optString("fill", "").takeIf { it.isNotBlank() }
-            val optional = obj.optBoolean("optional", false)
-            val label = when {
-                fill != null && labels.containsKey(fill) -> labels.getValue(fill)
-                fill != null && optional -> continue // hide optional slot without language label
-                else -> obj.getString("label")
-            }
-            val altLabel = if (fill != null && altLabels.isNotEmpty()) {
-                altLabels[fill]?.takeIf { it.isNotBlank() && !it.equals(label, ignoreCase = false) }
-            } else {
-                null
-            }
-            val role = obj.optString("role", "").takeIf { it.isNotBlank() }
-            keys += KeyboardKey(
-                label = label,
-                hid = parseHexByte(obj.getString("hid")),
-                mods = parseHexByte(obj.optString("mods", "0x00")),
-                span = obj.optDouble("span", 1.0).toFloat().coerceAtLeast(0.5f),
-                stickyMod = obj.optBoolean("sticky_mod", false),
-                role = role,
-                altLabel = altLabel,
-            )
+        for (i in 0 until arr.length()) {
+            val key = composeKey(arr.getJSONObject(i), labels, altLabels) ?: continue
+            keys += key
         }
         return keys
+    }
+
+    private fun composeKey(
+        obj: JSONObject,
+        labels: Map<String, String>,
+        altLabels: Map<String, String>,
+    ): KeyboardKey? {
+        val fill = obj.optString("fill", "").takeIf { it.isNotBlank() }
+        val optional = obj.optBoolean("optional", false)
+        val label = when {
+            fill != null && labels.containsKey(fill) -> labels.getValue(fill)
+            fill != null && optional -> return null
+            else -> obj.getString("label")
+        }
+        val altLabel = if (fill != null && altLabels.isNotEmpty()) {
+            altLabels[fill]?.takeIf { it.isNotBlank() && it != label }
+        } else {
+            null
+        }
+        val role = obj.optString("role", "").takeIf { it.isNotBlank() }
+        return KeyboardKey(
+            label = label,
+            hid = parseHexByte(obj.getString("hid")),
+            mods = parseHexByte(obj.optString("mods", "0x00")),
+            span = obj.optDouble("span", 1.0).toFloat().coerceAtLeast(0.5f),
+            stickyMod = obj.optBoolean("sticky_mod", false),
+            role = role,
+            altLabel = altLabel,
+        )
+    }
+
+    private fun parseStackAxis(raw: String): StackAxis {
+        return when (raw.trim().lowercase()) {
+            "h", "horizontal", "row" -> StackAxis.HORIZONTAL
+            else -> StackAxis.VERTICAL
+        }
     }
 
     private fun parseHexByte(raw: String): Byte {

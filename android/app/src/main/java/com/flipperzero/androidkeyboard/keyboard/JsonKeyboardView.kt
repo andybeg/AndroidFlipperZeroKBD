@@ -12,6 +12,8 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.View
+import android.view.ViewGroup
 import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -61,24 +63,11 @@ class JsonKeyboardView @JvmOverloads constructor(
             grid.setPadding(margin, margin / 2, margin, margin / 2)
 
             var column = 0
-            row.forEach { key ->
-                val units = (key.span * 2).toInt().coerceAtLeast(1)
-                val dual = !key.altLabel.isNullOrBlank()
-                val button = TextView(context).apply {
-                    text = formatKeyText(key)
-                    gravity = Gravity.CENTER
-                    setTextColor(Color.WHITE)
-                    setBackgroundColor(keyBackground(key, false))
-                    val primarySp = when {
-                        dual -> 16f
-                        key.label.length > 2 -> 14f
-                        else -> 18f
-                    }
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, primarySp)
-                    typeface = Typeface.DEFAULT_BOLD
-                    val padV = ((if (dual) 8 else 12) * density).toInt()
-                    setPadding(0, padV, 0, padV)
-                    attachKeyInteraction(key, this)
+            row.forEach { cell ->
+                val units = (cell.span * 2).toInt().coerceAtLeast(1)
+                val view: View = when (cell) {
+                    is KeyboardCell.Single -> createKeyButton(cell.key, density, stacked = false)
+                    is KeyboardCell.Stack -> createStackView(cell, density)
                 }
 
                 val params = GridLayout.LayoutParams().apply {
@@ -87,14 +76,70 @@ class JsonKeyboardView @JvmOverloads constructor(
                     columnSpec = GridLayout.spec(column, units, units.toFloat())
                     setMargins(margin, margin, margin, margin)
                 }
-                button.layoutParams = params
-                grid.addView(button)
-                keyViews += key to button
+                view.layoutParams = params
+                grid.addView(view)
                 column += units
             }
             addView(grid)
         }
         refreshStickyVisuals()
+    }
+
+    private fun createStackView(
+        stack: KeyboardCell.Stack,
+        density: Float,
+    ): LinearLayout {
+        val vertical = stack.axis == StackAxis.VERTICAL
+        val container = LinearLayout(context).apply {
+            orientation = if (vertical) VERTICAL else HORIZONTAL
+            weightSum = stack.keys.size.toFloat().coerceAtLeast(1f)
+        }
+        val gap = (2 * density).toInt()
+        stack.keys.forEachIndexed { index, key ->
+            val button = createKeyButton(key, density, stacked = true)
+            val lp = LinearLayout.LayoutParams(
+                if (vertical) ViewGroup.LayoutParams.MATCH_PARENT else 0,
+                if (vertical) 0 else ViewGroup.LayoutParams.MATCH_PARENT,
+                1f,
+            ).apply {
+                if (vertical) {
+                    if (index > 0) topMargin = gap
+                } else {
+                    if (index > 0) marginStart = gap
+                }
+            }
+            button.layoutParams = lp
+            container.addView(button)
+        }
+        // Match typical single-key height so ↑↓ sit in one “standard” slot.
+        container.minimumHeight = ((if (vertical) 48 else 36) * density).toInt()
+        return container
+    }
+
+    private fun createKeyButton(key: KeyboardKey, density: Float, stacked: Boolean): TextView {
+        val dual = !key.altLabel.isNullOrBlank()
+        return TextView(context).apply {
+            text = formatKeyText(key)
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            setBackgroundColor(keyBackground(key, false))
+            val primarySp = when {
+                stacked -> 13f
+                dual -> 16f
+                key.label.length > 2 -> 14f
+                else -> 18f
+            }
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, primarySp)
+            typeface = Typeface.DEFAULT_BOLD
+            val padV = when {
+                stacked -> (4 * density).toInt()
+                dual -> (8 * density).toInt()
+                else -> (12 * density).toInt()
+            }
+            setPadding(0, padV, 0, padV)
+            attachKeyInteraction(key, this)
+            keyViews += key to this
+        }
     }
 
     private fun formatKeyText(key: KeyboardKey): CharSequence {
@@ -192,6 +237,7 @@ class JsonKeyboardView @JvmOverloads constructor(
         private val SPECIAL_LABELS = setOf(
             "⇥", "⌫", "␣", "↵", "⇧", "⌃", "⌥", "⌘", "esc", "☰",
             "Tab", "Bksp", "Space", "Enter", "Shift", "Ctrl", "Win", "Alt", "Menu",
+            "←", "↑", "↓", "→",
         )
     }
 }
